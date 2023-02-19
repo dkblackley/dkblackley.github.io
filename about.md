@@ -4,6 +4,4 @@ title: About
 permalink: /about
 ---
 
-Hi, Write an awesome description about your blog here.  
-Feel free to make it a bit more interesting by adding a picture or two.  
-Only limit here is your creativity and imagination. Unleash them with full force.  
+Hi. My name is Daniel Blackley and I'm a Security researcher with a blog. I got some experience with programming, AI, Pen testing and this blog is to talk about whatever I'm currently working on that's interesting. I hope you enjoy! Contact at [**dkblackley@gmail.com**](dkblackley@gmail.com)

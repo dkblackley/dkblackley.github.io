@@ -9,7 +9,7 @@ lang: "en"
 title: Blackley Blogging
 
 # Short bio or description (displayed in the header)
-description: I do a lotta tech projects. Over the years I've made a lot of mistakes and learnt a lot, and now I hope to share those lessons with you!
+description: A tech blog where I can ramble about how many silly mistakes I make or how many ingenious ideas I have.
 
 # URL of your avatar or profile pic (you could use your GitHub profile pic)
 avatar: /assets/image/avatar.png
@@ -53,7 +53,7 @@ footer_links:
 #copyright: "This site is made with <3 by *me, myself, and I*."
 
 # Time zone
-timezone: null
+timezone: Europe/London
 
 # Excerpt separator
 excerpt_separator: <!--more-->

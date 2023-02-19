@@ -1,0 +1,34 @@
+.cactus-button {
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 03px;
+  border: 01px solid $paleGray;
+  padding: 1.5px 03px;
+  margin:0;
+ //transform: translate(-50%, -50%);
+ //ms-transform: translate(-50%, -50%);
+  background-color: $gray;
+  color: $lightGray;
+  text-align: center;
+}
+
+.cactus-button:hover:not([disabled]) {
+ opacity: 0.6;
+ cursor: pointer;
+ background-color: $black;
+ color: $lightGray;
+ 
+}
+
+.cactus-button:hover:disabled {
+ opacity: 0.6;
+ cursor: not-allowed;
+}
+
+.cactus-login-button,
+.cactus-logout-button,
+.cactus-send-button {
+ margin-left: 08px;
+ }
+
+ @import "cactus";
