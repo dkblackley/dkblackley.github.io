@@ -114,6 +114,15 @@
     <script src="https://cdn.jsdelivr.net/npm/darkmode-js@1.5.7/lib/darkmode-js.min.js"></script>
     <script type="text/javascript" src="https://latest.cactus.chat/cactus.js"></script>
     <script>
+      function addDarkmodeWidget() {
+        new Darkmode().showWidget();
+        window.addEventListener('load', addDarkmodeWidget);
+      }
+      const options = {
+        label: '🌓',
+      }
+      const darkmode = new Darkmode(options);
+            darkmode.showWidget();
     initComments({
       node: document.getElementById("comment-section"),
       defaultHomeserverUrl: "https://matrix.cactus.chat:8448",
