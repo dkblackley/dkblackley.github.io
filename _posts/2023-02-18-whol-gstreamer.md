@@ -11,7 +11,7 @@ Recently I've been wrapping my head around the video library [Gstreamer](https:/
 ## The Gstreamer pipeline
 
 Gstreamer works using a [pipeline](https://gstreamer.freedesktop.org/documentation/tutorials/basic/dynamic-pipelines.html) to link a variety of media elements. In other words, this pipeline defines where we get the data, what to do with the data and where to send the data. Let's take an example; Say we have the following pipeline:
- `filesrc location=test.mp4 ! qtdemux ! h264parse ! rtph264pay ! udpsink host=$HOST port=5000` 
+ `filesrc location=test.mp4 ! qtdemux ! h264parse ! rtph264pay ! udpsink host=$HOST port=5000`
  (where $HOST is localhost on my system)
 
 This pipeline launches a RTSP Server that takes its source data from a file called test.mp4. This file is passed to a demuxer and then the raw H264 frames are parsed before being wrapped in an rtp header with rtph264pay, then your RTSP stream is accesible via UDP on $HOST at port 5000. You can try this by running this launch string with the gst-launch-1.0 command. You'll need a video file called test.mp4 of course, and some player like ffplay or vlc to connect to localhost:5000.
@@ -31,22 +31,61 @@ Instead of using `filesrc` in the pipeline, we can define and `appsrc`. This sig
             .format(opt.image_width, opt.image_height, self.fps)
 {% endhighlight %}
 
-Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstreamer/gstcaps.html#GstCaps) to appsrc, including the framerate ad resolution of our data.
+Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstreamer/gstcaps.html#GstCaps) to appsrc, which defines the frame rate and resolution of our video. Appsrc takes in single frames at a time, but we quickly run into an issue of performance, every python video library first decodes the frame before allowing the user to manipulate it (as h264 encoding relies on temporal data that would be lost when reading a single frame). We would then have to re-encode the data using ffmpeg, which takes a tremendous amount of time and gives a drastic reduction in quality (Unless you have a beefy GPU). We can easily open a file with something like OpenCv2, but how do we push this data onto the next part of the pipeline? Gstreamer is a multi-threaded library that relies on a signalling system.
+
+## Gstreamer signals
+
+Whenever an event occurs in Gstreamer, such as [streams requiring configuring](google.com), [video changing state](google.com) or [clients leaving the stream](google.com) Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
 
 {% highlight python %}
-    # attach the launch string to the override method
-    def do_create_element(self, url):
-        request_uri = url.get_request_uri()
-        print('[INFO]: stream request on {}'.format(request_uri))
-        self.number_frames = 0
-        if not self.test:
-            self.cap = get_stream_socket(self.device_id)
-        return Gst.parse_launch(self.launch_string)
+    # attaching the source element to the rtsp media
+    def do_configure(self, rtsp_media):
+        appsrc = rtsp_media.get_element().get_child_by_name('source')
+        appsrc.connect('need-data', self.on_need_data)
 {% endhighlight %}
 
-## The Gstreamer message bus
+attaches a function called on_need_data() to the need-data signal. For completeness, here is an example on_need_data() for this application:
 
-### EOS
-### How EOS works
+{% highlight python %}
+    def on_need_data(self, src, length):
+
+        if not self.cap.isOpened(): # Rewind video once we hit the end
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+        ret, frame = self.cap.read() # read frame from opencv2
+        timestamp = self.number_frames * self.duration
+        frame = cv2.resize(frame, (opt.image_width, opt.image_height), \
+                           interpolation=cv2.INTER_LINEAR)
+
+        data = frame.tobytes()
+        buf = Gst.Buffer.new_allocate(None, len(data), None)
+        buf.fill(0, data)
+        buf.duration = self.duration
+        buf.pts = buf.dts = int(decoding_timestap) # Set data for RTP header
+        buf.offset = timestamp
+        retval = src.emit('push-buffer', buf)
+
+        print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
+                                                                               self.duration,
+                                                                               self.duration / Gst.SECOND))
+        if retval != Gst.FlowReturn.OK:
+            print(retval)
+{% endhighlight %}
+
+Of interesting note is that we emit our own signal, "push-buffer", alongside the buffer holding a frame. There is a different method that then handles this "push-buffer" signal and sends our data down the pipe. Attemping this implimentation will quickly turn any laptop into a space heater, however, we can query Opencv2 to determine once we have hit the end of our video, and rewind to the beginning. Surely there must be a way to send these video frames WITHOUT doing this decoding dance? Well first lets look into some other interesting signals...
+
+### [EOS](https://gstreamer.freedesktop.org/documentation/additional/design/events.html?gi-language=c#eos)
+
+An EOS event is sent out by the source element once no more data is availible. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking] event, but EOS is typicall sent very late, (and causes issues)[google.com]. There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
+
+### SEGMENT_DONE
+
+[SEGMENT_DONE](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking) is emitted as early as possible, giving more than enough time to prepare for a loop. SEGMENT_DONE isn't sent by default, and is triggered as part of a SEEK event. As such, [we must perform an initial seek](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer) to trigger these messages on the bus. Now once we see the SEGMENT_DONE message, we can perform another SEEK event back to the beggining of the file:
+
+{% highlight python %}
+
+{% endhighlight %}
+
+### Stream Configured
 
 ## Making a video loop without decoding the video first
