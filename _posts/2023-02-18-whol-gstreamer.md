@@ -4,7 +4,7 @@ title: Wohl, Gstreamer - How to loop videos without decoding first in Gstreamer
 categories: [Programming]
 ---
 
-If you've been up until it's 2am and you got a project due in 5 days ago then just jump to [here](#making-a-video-loop-without-decoding-the-video-first). Full code is available on my github
+If you've been up until it's 2am and you got a project due in 5 days ago then just jump to [here](#making-a-video-loop-without-decoding-the-video-first). Or check out the full code available on my [github] (https://github.com/dkblackley/Gstreamer-example/blob/main/Server/main.py)
 
 Recently I've been wrapping my head around the video library [Gstreamer](https://gstreamer.freedesktop.org/). Particularly, I've been using the Python bindings, naively believing Python would be easier than writing it in its native language, C. In retrospect, I'd perhaps recommend using C instead, it seems to be easier to follow documentation online. As an overview, my use-case is that I want to stream a video over RTSP, but require that the video loops. Surprisingly, Gstreamer has no built in functionality for this, so I dove deeper.
 
@@ -76,16 +76,120 @@ Of interesting note is that we emit our own signal, "push-buffer", alongside the
 
 ### [EOS](https://gstreamer.freedesktop.org/documentation/additional/design/events.html?gi-language=c#eos)
 
-An EOS event is sent out by the source element once no more data is availible. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking] event, but EOS is typicall sent very late, (and causes issues)[google.com]. There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
+An EOS event is sent out by the source element once no more data is availible. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking] event with, but EOS is typicall sent very late, (and causes issues)[google.com]. There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
 
 ### SEGMENT_DONE
 
-[SEGMENT_DONE](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking) is emitted as early as possible, giving more than enough time to prepare for a loop. SEGMENT_DONE isn't sent by default, and is triggered as part of a SEEK event. As such, [we must perform an initial seek](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer) to trigger these messages on the bus. Now once we see the SEGMENT_DONE message, we can perform another SEEK event back to the beggining of the file:
+[SEGMENT_DONE](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking) isn't sent by default, and is triggered as part of a SEEK event with the SEGMENT flag set. As such, [we must perform an initial seek](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer) to trigger these messages on the bus. Now once we see the SEGMENT_DONE message, we can perform another SEEK event back to the beggining of the file:
 
 {% highlight python %}
 
+def seek_video(self):
+    if opt.debug >= 1:
+        print("Seeking...")
+    self.my_player.seek(1.0,
+        Gst.Format.TIME,
+        Gst.SeekFlags.SEGMENT,
+        Gst.SeekType.SET, 0,
+        Gst.SeekType.SET, self.video_length * Gst.SECOND)
+
 {% endhighlight %}
 
-### Stream Configured
+One important thing of note is that we do not set the flush buffer flag in our seek request. Flushing the buffer will cause some unnecessary stuttering, whereas this creates a seemless video loop.
 
-## Making a video loop without decoding the video first
+### Intercepting the signals while using filesrc
+
+To avoid using appsrc, we use filesrc, which removes the need for de- and re-encoding data. However, filesrc doesn't take in any data from our application, it reads it direfctly from the file (indeed, the string I use for a launch string could be ran with gst-launch and piped into a udpsink, removing the need for a Python file entirely!). This removes the obvious benefit that we can no longer manually count the number of frames and loop back programattically. Thankfully, we can intercept some of these handy messages we just discussed.
+
+When manually creating the pipeline, it's [very easy to extract the bus on which these messages are sent](google.com). However, Python has some very handy classes for [RTSP media factories](google.com) and [parsing the gstreamer launch string](google.com) of which lazy programmers like me would like to continue using. So how do we extract the messages? We need to [create our own Gbin](google.com) and overwrite the default message handler:
+
+{% highlight python %}
+
+def do_create_element(self, url):
+    request_uri = url.get_request_uri()
+    print('[INFO]: stream request on {}'.format(request_uri))
+
+    # queue2 is better if network speed is a concern
+    launch_string = "filesrc location={} ! " \
+                    "qtdemux ! " \
+                    "h264parse ! " \
+                    "queue2 ! " \
+                    "rtph264pay name=pay0 config-interval=1 pt=96".format(video_map[self.device_id])
+    player = Gst.parse_launch(launch_string)
+
+    self.video_length = int(get_length(video_map[self.device_id]))
+    if int(opt.debug) >= 1:
+        print("Video Length: " + str(self.video_length))
+
+    # creates extended Gst.Bin with message debugging enabled
+    self.extendedBin = ExtendedBin()
+    self.extendedBin.fake_init(self.video_length, self.device_id)
+    self.extendedBin.add(player)
+
+    # creates new Pipeline and adds extended Bin to it
+    self.extendedPlayer = Gst.Pipeline.new("extendedPipeline")
+    self.extendedPlayer.add(self.extendedBin)
+    self.extendedBin.set_player(self.extendedPlayer)
+
+    return self.extendedPlayer
+
+{% endhighlight %}
+
+with our extended bin appearing as:
+
+{% highlight python %}
+
+# extended Gst.Bin that overrides do_handle_message and adds debugging
+class ExtendedBin(Gst.Bin):
+
+    def fake_init(self, length, endpoint):
+        self.video_length = length - 1  # -1 for some buffer (the video pauses at the EOS
+        self.endpoint = endpoint
+
+    def set_player(self, player):
+        self.my_player = player
+
+
+    def do_handle_message(self, message):
+
+        if int(opt.debug) >= 2:
+
+            if message.type == Gst.MessageType.ERROR:
+                error, debug = message.parse_error()
+                print("ERROR:", message.src.get_name(), ":", error.message)
+                if debug:
+                    print ("Debug info: " + debug)
+
+            elif message.type == Gst.MessageType.EOS:
+                print ("End of stream")
+
+            elif message.type == Gst.MessageType.STATE_CHANGED:
+                oldState, newState, pendingState = message.parse_state_changed()
+                print ("State changed -> old:{}, new:{}, pending:{}".format(oldState, newState, pendingState))
+
+            elif message.type == Gst.MessageType.STREAM_STATUS:
+                incoming, owner = message.parse_stream_status()
+                print ("message: {} Owner: {}".format(incoming, owner))
+
+            else :
+                print("Some other message type: " + str(message.type))
+
+        if message.type == Gst.MessageType.STREAM_STATUS:
+            incoming, owner = message.parse_stream_status()
+            if incoming == Gst.StreamStatusType.LEAVE or incoming == Gst.StreamStatusType.DESTROY:
+                if int(opt.debug) >= 2:
+                    print("Stream shutting down")
+                # Keeping this as a seperate if in case you want to do some cleanup...
+
+        if message.type == Gst.MessageType.DURATION_CHANGED: # Called when stream has started
+            print("Duration changed")
+            GLib.timeout_add(25, self.seek_video) # Call the seek after the video has begun playing
+
+        if message.type == Gst.MessageType.SEGMENT_DONE:
+            self.seek_video()
+
+        Gst.Bin.do_handle_message(self, message)
+
+{% endhighlight %}
+
+## Closing thoughts
