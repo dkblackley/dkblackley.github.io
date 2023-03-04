@@ -35,7 +35,7 @@ Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstre
 
 ## Gstreamer signals
 
-Whenever an event occurs in Gstreamer, such as [streams requiring configuring](https://gstreamer.freedesktop.org/documentation/gst-rtsp-server/rtsp-media-factory.html?gi-language=python#GstRTSPMediaFactoryClass::media_configure), [video changing state](https://gstreamer.freedesktop.org/documentation/gstreamer/gstelement.html?gi-language=c#GstStateChange) or [clients leaving the stream](https://gstreamer.freedesktop.org/documentation/additional/design/stream-status.html?gi-language=python#messages) Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the Gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
+Whenever an event occurs in Gstreamer, such as [streams requiring configuring](https://gstreamer.freedesktop.org/documentation/gst-rtsp-server/rtsp-media-factory.html?gi-language=python#GstRTSPMediaFactoryClass::media_configure), [video changing state](https://gstreamer.freedesktop.org/documentation/gstreamer/gstelement.html?gi-language=c#GstStateChange) or [clients leaving the stream](https://gstreamer.freedesktop.org/documentation/additional/design/stream-status.html?gi-language=python#messages), Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the Gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
 
 {% highlight python %}
     # attaching the source element to the rtsp media
@@ -76,11 +76,11 @@ Of interesting note is that we emit our own signal, "push-buffer", alongside the
 
 ### [EOS](https://gstreamer.freedesktop.org/documentation/additional/design/events.html?gi-language=c#eos)
 
-An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=python#seeking] event with, but EOS is typically sent very late, ([and causes issues](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer)). There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
+An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a [SEEK](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=python#seeking) event with, but EOS is typically sent very late, ([and causes issues](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer)). There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
 
-### SEGMENT_DONE
+### [SEGMENT_DONE](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking)
 
-[SEGMENT_DONE](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking) isn't sent by default, and is triggered as part of a SEEK event with the SEGMENT flag set. As such, [we must perform an initial seek](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer) to trigger these messages on the bus. Now once we see the SEGMENT_DONE message, we can perform another SEEK event back to the beggining of the file:
+ SEGMENT_DONE isn't sent by default, and is triggered as part of a SEEK event with the SEGMENT flag set. As such, [we must perform an initial seek](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer) to trigger these messages on the bus. Now once we see the SEGMENT_DONE message, we can perform another SEEK event back to the beggining of the file:
 
 {% highlight python %}
 
