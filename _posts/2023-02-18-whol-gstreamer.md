@@ -76,7 +76,7 @@ Of interesting note is that we emit our own signal, "push-buffer", alongside the
 
 ### [EOS](https://gstreamer.freedesktop.org/documentation/additional/design/events.html?gi-language=c#eos)
 
-An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a [SEEK](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=python#seeking) event with, but EOS is typically sent very late, ([and causes issues](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer)). There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
+An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a [SEEK](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=python#seeking) event with, but EOS is typically sent very late, ([and causes issues](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer)). There is, thankfully, a better signal sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
 
 ### [SEGMENT_DONE](https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking)
 
