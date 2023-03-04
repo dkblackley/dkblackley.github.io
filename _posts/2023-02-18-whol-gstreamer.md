@@ -4,7 +4,7 @@ title: Wohl, Gstreamer - How to loop videos without decoding first in Gstreamer
 categories: [Programming]
 ---
 
-If you've been up until it's 2am and you got a project due in 5 days ago then just jump to [here](#making-a-video-loop-without-decoding-the-video-first). Or check out the full code available on my [github] (https://github.com/dkblackley/Gstreamer-example/blob/main/Server/main.py)
+If you've been up until it's 2am and you got a project due in 5 days ago then just jump to [here](#making-a-video-loop-without-decoding-the-video-first). Or check out the full code available on my [github](https://github.com/dkblackley/Gstreamer-example/blob/main/Server/main.py)
 
 Recently I've been wrapping my head around the video library [Gstreamer](https://gstreamer.freedesktop.org/). Particularly, I've been using the Python bindings, naively believing Python would be easier than writing it in its native language, C. In retrospect, I'd perhaps recommend using C instead, it seems to be easier to follow documentation online. As an overview, my use-case is that I want to stream a video over RTSP, but require that the video loops. Surprisingly, Gstreamer has no built in functionality for this, so I dove deeper.
 
@@ -35,7 +35,7 @@ Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstre
 
 ## Gstreamer signals
 
-Whenever an event occurs in Gstreamer, such as [streams requiring configuring](google.com), [video changing state](google.com) or [clients leaving the stream](google.com) Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the Gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
+Whenever an event occurs in Gstreamer, such as [streams requiring configuring](https://gstreamer.freedesktop.org/documentation/gst-rtsp-server/rtsp-media-factory.html?gi-language=python#GstRTSPMediaFactoryClass::media_configure), [video changing state](https://gstreamer.freedesktop.org/documentation/gstreamer/gstelement.html?gi-language=c#GstStateChange) or [clients leaving the stream](https://gstreamer.freedesktop.org/documentation/additional/design/stream-status.html?gi-language=python#messages) Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the Gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
 
 {% highlight python %}
     # attaching the source element to the rtsp media
@@ -76,7 +76,7 @@ Of interesting note is that we emit our own signal, "push-buffer", alongside the
 
 ### [EOS](https://gstreamer.freedesktop.org/documentation/additional/design/events.html?gi-language=c#eos)
 
-An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking] event with, but EOS is typically sent very late, (and causes issues)[google.com]. There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
+An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=python#seeking] event with, but EOS is typically sent very late, ([and causes issues](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer)). There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
 
 ### SEGMENT_DONE
 
@@ -101,7 +101,7 @@ One important thing of note is that we do not set the flush buffer flag in our s
 
 To avoid using appsrc, we use filesrc, which removes the need for de- and re-encoding data. However, filesrc doesn't take in any data from our application, it reads it direfctly from the file (indeed, the string I use for a launch string could be ran with gst-launch and piped into a udpsink, removing the need for a Python file entirely!). This removes the obvious benefit that we can no longer manually count the number of frames and loop back programmatically. Thankfully, we can intercept some of these handy messages we just discussed.
 
-When manually creating the pipeline, it's [very easy to extract the bus on which these messages are sent](google.com). However, Python has some very handy classes for [RTSP media factories](google.com) and [parsing the Gstreamer launch string](google.com) of which lazy programmers like me would like to continue using. So how do we extract the messages? We need to [create our own Gbin](google.com) and overwrite the default message handler:
+When manually creating the pipeline, it's [very easy to extract the bus on which these messages are sent](https://stackoverflow.com/questions/54227361/handling-errors-with-gst-rtsp-server-python-bindings). However, Python has some very handy classes for [RTSP media factories](https://gstreamer.freedesktop.org/documentation/gst-rtsp-server/rtsp-media-factory.html?gi-language=python) and [parsing the Gstreamer launch string](https://gstreamer.freedesktop.org/documentation/gstreamer/gstparse.html?gi-language=python#gst_parse_launch) of which lazy programmers like me would like to continue using. So how do we extract the messages? We need to [create our own Gst bin](https://stackoverflow.com/questions/61604103/where-are-gstreamer-bus-log-messages) and overwrite the default message handler:
 
 {% highlight python %}
 
@@ -194,5 +194,5 @@ class ExtendedBin(Gst.Bin):
 
 ## Some Closing notes
 
-In retrospect, starting with the C bindings would likely leave you with a lot less problems, due to the abundance of material online to help newcomers. Perhaps I'll try re-writing this in C to get more comfortable with those bindings. As another aside, there are other ways to achieve what I have here with filesrc. One way I experimented with was striping the mp4 container from the file and simply [trying to use the NAL packet headers to extract h264 chunks](google.com). You could then use appsrc and pass these into a h264 parser, but debugging the parsing of binary numbers comes with it's own headaches. All in all, this method works well for my use case, and hopefully you've learnt enough along the way to make a Gstreamer application to you use case.
+In retrospect, starting with the C bindings would likely leave you with a lot less problems, due to the abundance of material online to help newcomers. Perhaps I'll try re-writing this in C to get more comfortable with those bindings. As another aside, there are other ways to achieve what I have here with filesrc. One way I experimented with was stripping the mp4 container from the file and simply [trying to use the NAL packet headers to extract h264 chunks](https://stackoverflow.com/questions/1685494/what-does-this-h264-nal-header-mean). You could then use appsrc and pass these into a h264 parser, but debugging the parsing of binary numbers comes with it's own headaches. All in all, this method works well for my use case, and hopefully you've learnt enough along the way to make a Gstreamer application to you use case.
 
