@@ -14,9 +14,9 @@ Gstreamer works using a [pipeline](https://gstreamer.freedesktop.org/documentati
  `filesrc location=test.mp4 ! qtdemux ! h264parse ! rtph264pay ! udpsink host=$HOST port=5000`
  (where $HOST is localhost on my system)
 
-This pipeline launches a RTSP Server that takes its source data from a file called test.mp4. This file is passed to a demuxer and then the raw H264 frames are parsed before being wrapped in an rtp header with rtph264pay, then your RTSP stream is accesible via UDP on $HOST at port 5000. You can try this by running this launch string with the gst-launch-1.0 command. You'll need a video file called test.mp4 of course, and some player like ffplay or vlc to connect to localhost:5000.
+This pipeline launches a RTSP Server that takes its source data from a file called test.mp4. This file is passed to a demuxer and then the raw H264 frames are parsed before being wrapped in an rtp header with rtph264pay, then your RTSP stream is accessible via UDP on $HOST at port 5000. You can try this by running this launch string with the gst-launch-1.0 command. You'll need a video file called test.mp4 of course, and some player like ffplay or vlc to connect to localhost:5000.
 
-This is all well and good for simple RTSP serving, but what if you want to perform some processing on the frames before serving them, or wanted to serve RTSP in a programmatic way? Well thankfully gstreamer's native C-library has bindings in many languages.
+This is all well and good for simple RTSP serving, but what if you want to perform some processing on the frames before serving them, or wanted to serve RTSP in a programmatic way? Well thankfully Gstreamer's native C-library has bindings in many languages.
 
 ### Using appsrc
 
@@ -35,7 +35,7 @@ Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstre
 
 ## Gstreamer signals
 
-Whenever an event occurs in Gstreamer, such as [streams requiring configuring](google.com), [video changing state](google.com) or [clients leaving the stream](google.com) Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
+Whenever an event occurs in Gstreamer, such as [streams requiring configuring](google.com), [video changing state](google.com) or [clients leaving the stream](google.com) Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the Gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
 
 {% highlight python %}
     # attaching the source element to the rtsp media
@@ -72,11 +72,11 @@ attaches a function called on_need_data() to the need-data signal. For completen
             print(retval)
 {% endhighlight %}
 
-Of interesting note is that we emit our own signal, "push-buffer", alongside the buffer holding a frame. There is a different method that then handles this "push-buffer" signal and sends our data down the pipe. Attemping this implimentation will quickly turn any laptop into a space heater, however, we can query Opencv2 to determine once we have hit the end of our video, and rewind to the beginning. Surely there must be a way to send these video frames WITHOUT doing this decoding dance? Well first lets look into some other interesting signals...
+Of interesting note is that we emit our own signal, "push-buffer", alongside the buffer holding a frame. There is a different method that then handles this "push-buffer" signal and sends our data down the pipe. Attempting this implementation will quickly turn any laptop into a space heater, however, we can query Opencv2 to determine once we have hit the end of our video, and rewind to the beginning. Surely there must be a way to send these video frames WITHOUT doing this decoding dance? Well first lets look into some other interesting signals...
 
 ### [EOS](https://gstreamer.freedesktop.org/documentation/additional/design/events.html?gi-language=c#eos)
 
-An EOS event is sent out by the source element once no more data is availible. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking] event with, but EOS is typicall sent very late, (and causes issues)[google.com]. There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
+An EOS event is sent out by the source element once no more data is available. Usually this event is passed down the pipe to all other elements to inform them that there is no more data to be parsed. We could intercept this signal and rewind the video to the beginning by using a (SEEK)[https://gstreamer.freedesktop.org/documentation/additional/design/seeking.html?gi-language=c#seeking] event with, but EOS is typically sent very late, (and causes issues)[google.com]. There is, thankfully, a better signal, sent out with enough time to comfortably rewind the video, the SEGMENT_DONE signal.
 
 ### SEGMENT_DONE
 
@@ -95,13 +95,13 @@ def seek_video(self):
 
 {% endhighlight %}
 
-One important thing of note is that we do not set the flush buffer flag in our seek request. Flushing the buffer will cause some unnecessary stuttering, whereas this creates a seemless video loop.
+One important thing of note is that we do not set the flush buffer flag in our seek request. Flushing the buffer will cause some unnecessary stuttering, whereas this creates a seamless video loop.
 
 ### Intercepting the signals while using filesrc
 
-To avoid using appsrc, we use filesrc, which removes the need for de- and re-encoding data. However, filesrc doesn't take in any data from our application, it reads it direfctly from the file (indeed, the string I use for a launch string could be ran with gst-launch and piped into a udpsink, removing the need for a Python file entirely!). This removes the obvious benefit that we can no longer manually count the number of frames and loop back programattically. Thankfully, we can intercept some of these handy messages we just discussed.
+To avoid using appsrc, we use filesrc, which removes the need for de- and re-encoding data. However, filesrc doesn't take in any data from our application, it reads it direfctly from the file (indeed, the string I use for a launch string could be ran with gst-launch and piped into a udpsink, removing the need for a Python file entirely!). This removes the obvious benefit that we can no longer manually count the number of frames and loop back programmatically. Thankfully, we can intercept some of these handy messages we just discussed.
 
-When manually creating the pipeline, it's [very easy to extract the bus on which these messages are sent](google.com). However, Python has some very handy classes for [RTSP media factories](google.com) and [parsing the gstreamer launch string](google.com) of which lazy programmers like me would like to continue using. So how do we extract the messages? We need to [create our own Gbin](google.com) and overwrite the default message handler:
+When manually creating the pipeline, it's [very easy to extract the bus on which these messages are sent](google.com). However, Python has some very handy classes for [RTSP media factories](google.com) and [parsing the Gstreamer launch string](google.com) of which lazy programmers like me would like to continue using. So how do we extract the messages? We need to [create our own Gbin](google.com) and overwrite the default message handler:
 
 {% highlight python %}
 
@@ -179,7 +179,7 @@ class ExtendedBin(Gst.Bin):
             if incoming == Gst.StreamStatusType.LEAVE or incoming == Gst.StreamStatusType.DESTROY:
                 if int(opt.debug) >= 2:
                     print("Stream shutting down")
-                # Keeping this as a seperate if in case you want to do some cleanup...
+                # Keeping this as a separate if in case you want to do some cleanup...
 
         if message.type == Gst.MessageType.DURATION_CHANGED: # Called when stream has started
             print("Duration changed")
@@ -192,4 +192,7 @@ class ExtendedBin(Gst.Bin):
 
 {% endhighlight %}
 
-## Closing thoughts
+## Some Closing notes
+
+In retrospect, starting with the C bindings would likely leave you with a lot less problems, due to the abundance of material online to help newcomers. Perhaps I'll try re-writing this in C to get more comfortable with those bindings. As another aside, there are other ways to achieve what I have here with filesrc. One way I experimented with was striping the mp4 container from the file and simply [trying to use the NAL packet headers to extract h264 chunks](google.com). You could then use appsrc and pass these into a h264 parser, but debugging the parsing of binary numbers comes with it's own headaches. All in all, this method works well for my use case, and hopefully you've learnt enough along the way to make a Gstreamer application to you use case.
+
