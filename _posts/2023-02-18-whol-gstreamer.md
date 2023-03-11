@@ -22,14 +22,14 @@ This is all well and good for simple RTSP serving, but what if you want to perfo
 
 Instead of using `filesrc` in the pipeline, we can define and `appsrc`. This signifies that our data is going to be coming from an [application](https://gstreamer.freedesktop.org/documentation/app/appsrc.html). You can define things like framerate and resolution in your launch string, here is an example apprsc string that takes in some data and then encodes it as h264:
 
-{% highlight python %}
+```python
 	self.launch_string = 'appsrc name=source is-live=true block=true format=GST_FORMAT_TIME ' \
                              'caps=video/x-raw,format=RGB,width={},height={},framerate={}/1 ' \
                              '! videoconvert ! video/x-raw,format=I420 ' \
                              '! x264enc speed-preset=ultrafast tune=zerolatency ' \
                              '! rtph264pay config-interval=1 name=pay0 pt=96' \
             .format(opt.image_width, opt.image_height, self.fps)
-{% endhighlight %}
+```
 
 Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstreamer/gstcaps.html#GstCaps) to appsrc, which defines the frame rate and resolution of our video. Appsrc takes in single frames at a time, but we quickly run into an issue of performance, every python video library first decodes the frame before allowing the user to manipulate it (as h264 encoding relies on temporal data that would be lost when reading a single frame). We would then have to re-encode the data using ffmpeg, which takes a tremendous amount of time and gives a drastic reduction in quality (Unless you have a beefy GPU). We can easily open a file with something like OpenCv2, but how do we push this data onto the next part of the pipeline? Gstreamer is a multi-threaded library that relies on a signalling system.
 
@@ -37,16 +37,19 @@ Notice that we pass [caps](https://gstreamer.freedesktop.org/documentation/gstre
 
 Whenever an event occurs in Gstreamer, such as [streams requiring configuring](https://gstreamer.freedesktop.org/documentation/gst-rtsp-server/rtsp-media-factory.html?gi-language=python#GstRTSPMediaFactoryClass::media_configure), [video changing state](https://gstreamer.freedesktop.org/documentation/gstreamer/gstelement.html?gi-language=c#GstStateChange) or [clients leaving the stream](https://gstreamer.freedesktop.org/documentation/additional/design/stream-status.html?gi-language=python#messages), Gstreamer sends out a signal to notify that some work needs done. In our scenario, whenever there is space in the Gstreamer buffer for a frame, the signal "need-data" is emitted. We can connect a function to this method so push data to the buffer when needed. For example:
 
-{% highlight python %}
+
+```python
     # attaching the source element to the rtsp media
     def do_configure(self, rtsp_media):
         appsrc = rtsp_media.get_element().get_child_by_name('source')
         appsrc.connect('need-data', self.on_need_data)
-{% endhighlight %}
+```
+
 
 attaches a function called on_need_data() to the need-data signal. For completeness, here is an example on_need_data() for this application:
 
-{% highlight python %}
+
+```python
     def on_need_data(self, src, length):
 
         if not self.cap.isOpened(): # Rewind video once we hit the end
@@ -70,7 +73,8 @@ attaches a function called on_need_data() to the need-data signal. For completen
                                                                                self.duration / Gst.SECOND))
         if retval != Gst.FlowReturn.OK:
             print(retval)
-{% endhighlight %}
+```
+
 
 Of interesting note is that we emit our own signal, "push-buffer", alongside the buffer holding a frame. There is a different method that then handles this "push-buffer" signal and sends our data down the pipe. Attempting this implementation will quickly turn any laptop into a space heater, however, we can query Opencv2 to determine once we have hit the end of our video, and rewind to the beginning. Surely there must be a way to send these video frames WITHOUT doing this decoding dance? Well first lets look into some other interesting signals...
 
@@ -82,8 +86,8 @@ An EOS event is sent out by the source element once no more data is available. U
 
  SEGMENT_DONE isn't sent by default, and is triggered as part of a SEEK event with the SEGMENT flag set. As such, [we must perform an initial seek](https://stackoverflow.com/questions/53747278/seamless-video-loop-in-gstreamer) to trigger these messages on the bus. Now once we see the SEGMENT_DONE message, we can perform another SEEK event back to the beggining of the file:
 
-{% highlight python %}
 
+```python
 def seek_video(self):
     if opt.debug >= 1:
         print("Seeking...")
@@ -93,7 +97,7 @@ def seek_video(self):
         Gst.SeekType.SET, 0,
         Gst.SeekType.SET, self.video_length * Gst.SECOND)
 
-{% endhighlight %}
+```
 
 One important thing of note is that we do not set the flush buffer flag in our seek request. Flushing the buffer will cause some unnecessary stuttering, whereas this creates a seamless video loop.
 
@@ -103,8 +107,8 @@ To avoid using appsrc, we use filesrc, which removes the need for de- and re-enc
 
 When manually creating the pipeline, it's [very easy to extract the bus on which these messages are sent](https://stackoverflow.com/questions/54227361/handling-errors-with-gst-rtsp-server-python-bindings). However, Python has some very handy classes for [RTSP media factories](https://gstreamer.freedesktop.org/documentation/gst-rtsp-server/rtsp-media-factory.html?gi-language=python) and [parsing the Gstreamer launch string](https://gstreamer.freedesktop.org/documentation/gstreamer/gstparse.html?gi-language=python#gst_parse_launch) of which lazy programmers like me would like to continue using. So how do we extract the messages? We need to [create our own Gst bin](https://stackoverflow.com/questions/61604103/where-are-gstreamer-bus-log-messages) and overwrite the default message handler:
 
-{% highlight python %}
 
+```python
 def do_create_element(self, url):
     request_uri = url.get_request_uri()
     print('[INFO]: stream request on {}'.format(request_uri))
@@ -133,12 +137,11 @@ def do_create_element(self, url):
 
     return self.extendedPlayer
 
-{% endhighlight %}
+```
 
 with our extended bin appearing as:
 
-{% highlight python %}
-
+```python
 # extended Gst.Bin that overrides do_handle_message and adds debugging
 class ExtendedBin(Gst.Bin):
 
@@ -189,8 +192,7 @@ class ExtendedBin(Gst.Bin):
             self.seek_video()
 
         Gst.Bin.do_handle_message(self, message)
-
-{% endhighlight %}
+```
 
 ## Some Closing notes
 
