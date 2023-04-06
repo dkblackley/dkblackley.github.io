@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Wohl, Gstreamer - How to loop videos without decoding first in Gstreamer
+title: Zum Wohl, Gstreamer - How to loop videos without decoding first in Gstreamer
 categories: [Programming]
 ---
 
