@@ -73,25 +73,45 @@ section .text
     global _start
 
 _start:
-    mov dword, [fizz], 3 ; set fizz to 3
-    mov dword, [buzz], 5 ; set buzz to 5
-    mov dword, [iter], 0
+    mov dword [fizz], 3 ; set fizz to 3
+    mov dword [buzz], 5 ; set buzz to 5
+    mov dword [iter], 0
 
     cmp dword [iter], loop_end ; If iteration is equal to end, jump to end
 	je end
 
     ; pushl is the same as push, we just specify that we're using a long value, which can usually be inferred
-    push $iter ; push current iteration onto the stack
-    push $fizz ; push fizz onto the stack
+    push iter ; push current iteration onto the stack (first param)
+    push fizz ; push fizz onto the stack (second param)
 
+    call find_remainder
 
-    push $iter ; push current iteration onto the stack
-    push $buzz ; push buzz onto the stack
+    mov ebx, eax ; return is stored in eax
+    mov eax, 1
+    int 0x80
 
-    cmp dword [iter], loop_end ; If iteration is equal to end, jump to end
-	je end
+    ; push iter ; push current iteration onto the stack
+    ; push buzz ; push buzz onto the stack
 
-find_remainder
+    ; cmp dword [iter], loop_end ; If iteration is equal to end, jump to end
+	; je end
+
+find_remainder:
+    ; can either do mov eax [esp+4] to access parameter, or use base pointer, ebp, which is easier for debugging with multiple function calls.
+    push ebp
+    mov ebp, esp
+    sub esp, 4 ; Align the stack to allow library calls
+
+    mov edx, 0 ; clear dividend
+    mov eax, [ebp+8] ; move first param into eax
+    mov ecx, [ebp+12] ; move second param into ecx
+    div ecx ; perform eax/ecx
+    mov eax, edx ; mov remainder into return register
+
+    ; Cleanup
+    mov esp, ebp
+    pop ebp 
+    ret
 
 print_fizz:
     mov ecx, "fizz" ; Store the reference to the message that we're going to write in the counter register
@@ -117,6 +137,7 @@ section .bss
     ; The remainders
     remainder_f resb 4
     remainder_b resb 4
+    ; remainder_t resb 4
 
 	iter resb 4
 
