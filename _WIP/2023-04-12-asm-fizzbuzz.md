@@ -69,16 +69,22 @@ Now lets move onto loops and the stack.
 
 
 ```assembly
-section .text
-    global _start
+default rel
+extern printf, exit
 
-_start:
+section .text
+    global main
+
+main:
     mov dword [fizz], 3 ; set fizz to 3
     mov dword [buzz], 5 ; set buzz to 5
-    mov dword [iter], 0
+    mov dword [iter], 1 ; start on the 1st iteration 
+    mov ecx, 100 ; run 100 times
 
-    cmp dword [iter], loop_end ; If iteration is equal to end, jump to end
-	je end
+
+MAIN_LOOP:
+    ; cmp dword [iter], loop_end ; If iteration is equal to end, jump to end
+	; je end
 
     ; pushl is the same as push, we just specify that we're using a long value, which can usually be inferred
     push iter ; push current iteration onto the stack (first param)
@@ -86,9 +92,48 @@ _start:
 
     call find_remainder
 
-    mov ebx, eax ; return is stored in eax
-    mov eax, 1
+    cmp eax, 0 ; if we can divide by fizz
+    jne $ + 28 ; if it's not equal, don't bother forming the next comparisons
+
+    push iter
+    push buzz
+    call find_remainder
+
+    cmp eax, 0 ; if we can divide by buzz
+    je print_fizzbuzz
+    je $ + 48 ; jump past the next if statements
+
+    push iter 
+    push fizz 
+
+    call find_remainder
+
+    cmp eax, 0 ; if we can only divide by fizz
+    je print_fizz
+
+    push iter 
+    push buzz
+
+    call find_remainder
+
+    cmp eax, 0 ; if we can only divide by buzz
+    je print_buzz
+
+    inc dword [iter] ; Increment iteration number
+
+    ; Call printf.
+    mov   esi, 0x12345678    ; "%x" takes a 32-bit unsigned int
+    lea   edi, [rel percent_d]
+    xor   eax, eax           ; AL=0  no FP args in XMM regs
+    call  printf
+
+    loop MAIN_LOOP
+
+    mov eax, 1 ; Move 1 into accumulator, which is sys exit on linux
+    mov ebx, 0 ; exit code 0
     int 0x80
+
+    
 
     ; push iter ; push current iteration onto the stack
     ; push buzz ; push buzz onto the stack
@@ -102,11 +147,16 @@ find_remainder:
     mov ebp, esp
     sub esp, 4 ; Align the stack to allow library calls
 
-    mov edx, 0 ; clear dividend
-    mov eax, [ebp+8] ; move first param into eax
-    mov ecx, [ebp+12] ; move second param into ecx
-    div ecx ; perform eax/ecx
-    mov eax, edx ; mov remainder into return register
+    mov edx, 0 ; clear first 32 bits
+
+    mov ebx, [ebp+8] ; move address of the first param into ebx (iter)
+    mov dword ebx, [ebx]
+
+    mov eax, [ebp+12] ; move address of the second param into eax (Fizz or Buzz)
+    mov dword eax, [eax]
+
+    div ebx ; perform eax/ebx (in our case it's eax % ebx
+    mov dword eax, edx ; mov remainder into return register
 
     ; Cleanup
     mov esp, ebp
@@ -114,20 +164,25 @@ find_remainder:
     ret
 
 print_fizz:
-    mov ecx, "fizz" ; Store the reference to the message that we're going to write in the counter register
-    mov ebx, 1 ; Tell tha base register that we want to push to the stdout
+    mov ecx, fizz_word ; Store the reference to the message that we're going to write in the counter register
+    mov edx, fizz_len
+    mov ebx, 1 ; Tell the base register that we want to push to the stdout
     mov eax, 4 ; Move 4 into the Accumulator which is the equivalent of calling sys write on linux
     int 0x80 ; int means interrupt, 0x80 means interrupt the kernal to make our system calls
 
 print_buzz:
+    mov ecx, buzz_word ; Store the reference to the message that we're going to write in the counter register
+    mov edx, buzz_len
+    mov ebx, 1 ; Tell the base register that we want to push to the stdout
+    mov eax, 4 ; Move 4 into the Accumulator which is the equivalent of calling sys write on linux
+    int 0x80 ; int means interrupt, 0x80 means interrupt the kernal to make our system calls
 
 print_fizzbuzz:
-
-
-end:
-    mov eax, 1 ; Move 1 into accumulator, which is sys exit on linux
-    mov ebx, 0 ; exit code 0
-    int 0x80
+    mov ecx, fizzbuzz_word ; Store the reference to the message that we're going to write in the counter register
+    mov edx, fizzbuzz_len
+    mov ebx, 1 ; Tell the base register that we want to push to the stdout
+    mov eax, 4 ; Move 4 into the Accumulator which is the equivalent of calling sys write on linux
+    int 0x80 ; int means interrupt, 0x80 means interrupt the kernal to make our system calls
 
 
 section .bss
@@ -153,5 +208,7 @@ section .global
 
     fizzbuzz_word db "Fizzbuzz!"
     fizzbuzz_len: equ $ - fizzbuzz_word
+
+    percent_d db "%d", 10, 0 ; 10 is newline, 0 is null
 ```
 ## Congratulations
