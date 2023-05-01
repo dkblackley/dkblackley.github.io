@@ -180,7 +180,7 @@ MAIN_LOOP:
     call find_remainder
 ```
 
-This command pushes whichever variable you give it onto the stack. This is all well and good, but what benefit does this bring us? We notice the call operand a few lines down calling something that we haven't seen yet called find_remainder. This is a function that takes in two parameters and then returns the remainder after performing integer division. We recall the previous statement:
+This command pushes whichever variable you give it onto the stack. This is all well and good, but what benefit does this bring us? We notice the call operand a few lines down calling something that we haven't seen yet, referenced as "find_remainder". This is a function that takes in two parameters and then returns the remainder after performing integer division. We recall the previous statement:
 
 > An assembly language is usually identifiable by the fact that each line corresponds to one machine instruction.
 
