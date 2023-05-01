@@ -196,7 +196,7 @@ We can't call a function AND send as many variables as we want. Instead we push 
 </div>
 
 
-The stack contains the variables pushed (iter and buzz) and then the return address, or where the function should return to once the "ret" operand is used. There are also two other concepts. The stack pointer (ESP), which always points to the top of the stack and the base pointer (EBP), which points to the "base" of the current function. using these two variables we can work out where our local variables are and where our passed in variables are/return address is. Let us see what the function "find_remainder" looks like:
+The stack contains the variables pushed (iter and buzz). There are also two other concepts. The stack pointer (ESP), which always points to the top of the stack and the base pointer (EBP), which points to the "base" of the current function. using these two variables we can work out where our local variables are and where our passed in variables are/return address is. Let us see what the function "find_remainder" looks like:
 
 ```assembly
 find_remainder:
@@ -229,6 +229,8 @@ find_remainder:
 <img src="https://github.com/dkblackley/dkblackley.github.io/blob/main/assets/image/stack_pointer_ret.png?raw=true" class="img-responsive" alt="Byte rotations">
 
 </div>
+
+We note that we now have the return address, or where the function should return to once the "ret" operand is used.
 
 We could now push things like local variables or access our parameters, which we do by moving \[ebp+8\] (the return and base pointer are both 4 bytes) into the EAX register. See the code comments above. Once we have moved both our parameters into their respective registers, we perform the div operation, which divides both numbers and stores the remainder in the edx register. The eax register can be used to store a return value, so we move edx into eax and then return the top of the stack to where the base pointer is, before popping the base pointer and returning to our return address.
 
