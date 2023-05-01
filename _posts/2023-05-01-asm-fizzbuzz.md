@@ -295,7 +295,7 @@ increment_loop:
     int 0x80
 ```
 
-As you may know, printf takes in as many args as you pass it. Here we simply push "%d\n" onto the stack and then the number to print. Then after the call trigger, you should see the number pop out. We then unconditionally jump to increment_loop, which isn't actually required here as the machine would naturally tick over to that section at after point. Regardless, it's good practice. Let's see if you can't decipher what increment_loop does after reading this article, you may need to look into what the inc operand does. Full code below:
+As you may know, printf takes in as many args as you pass it. Here we simply push "%d\n" onto the stack and then the number to print. Then after the call trigger, you should see the number pop out. We then unconditionally jump to increment_loop, which isn't actually required here as the machine would naturally tick over to that section. Regardless, it's good practice. Let's see if you can't decipher what increment_loop does after reading this article, you may need to look into what the inc operand does. Full code below:
 
 
 ```assembly
