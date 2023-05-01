@@ -186,7 +186,7 @@ We recall the previous statement:
 
 > An assembly language is usually identifiable by the fact that each line corresponds to one machine instruction.
 
-We can't call a function AND send as many variables as we want. Instead we push our variables onto this shared area of memory called the stack. As the stack is FIFO, we can push and pop the variables without affecting variables from previous functions (As long as we don't pop more than two variables off). After these two pushes and a call our stack should now look like:
+We can't call a function AND send as many variables as we want. Instead we push our variables onto this shared area of memory. As the stack is FIFO, we can push and pop the variables without affecting variables from previous functions (As long as we don't pop more than two variables off). After these two pushes and a call our stack should now look like:
 
 
 <div align="center">
