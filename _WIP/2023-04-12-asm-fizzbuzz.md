@@ -69,13 +69,11 @@ Now lets move onto loops and the stack.
 
 
 ```assembly
-default rel
-extern printf, exit
-
 section .text
-    global main
+    global _start
+    extern printf
 
-main:
+_start:
     mov dword [fizz], 3 ; set fizz to 3
     mov dword [buzz], 5 ; set buzz to 5
     mov dword [iter], 1 ; start on the 1st iteration 
@@ -119,15 +117,19 @@ MAIN_LOOP:
     cmp eax, 0 ; if we can only divide by buzz
     je print_buzz
 
+    ; Call printf.
+    mov eax, [iter]    ; "%x" takes a 32-bit unsigned int
+    push eax
+    push format
+    call  printf
+    add esp, 8 ; printf doesn't clean up the stack for us, we must remove our previously puished params 
+    jmp increment_loop
+
+increment_loop:
     inc dword [iter] ; Increment iteration number
 
-    ; Call printf.
-    mov   esi, 0x12345678    ; "%x" takes a 32-bit unsigned int
-    lea   edi, [rel percent_d]
-    xor   eax, eax           ; AL=0  no FP args in XMM regs
-    call  printf
-
-    loop MAIN_LOOP
+    cmp dword [iter], 100
+    jne MAIN_LOOP
 
     mov eax, 1 ; Move 1 into accumulator, which is sys exit on linux
     mov ebx, 0 ; exit code 0
@@ -169,6 +171,7 @@ print_fizz:
     mov ebx, 1 ; Tell the base register that we want to push to the stdout
     mov eax, 4 ; Move 4 into the Accumulator which is the equivalent of calling sys write on linux
     int 0x80 ; int means interrupt, 0x80 means interrupt the kernal to make our system calls
+    jmp increment_loop
 
 print_buzz:
     mov ecx, buzz_word ; Store the reference to the message that we're going to write in the counter register
@@ -176,6 +179,7 @@ print_buzz:
     mov ebx, 1 ; Tell the base register that we want to push to the stdout
     mov eax, 4 ; Move 4 into the Accumulator which is the equivalent of calling sys write on linux
     int 0x80 ; int means interrupt, 0x80 means interrupt the kernal to make our system calls
+    jmp increment_loop
 
 print_fizzbuzz:
     mov ecx, fizzbuzz_word ; Store the reference to the message that we're going to write in the counter register
@@ -183,6 +187,7 @@ print_fizzbuzz:
     mov ebx, 1 ; Tell the base register that we want to push to the stdout
     mov eax, 4 ; Move 4 into the Accumulator which is the equivalent of calling sys write on linux
     int 0x80 ; int means interrupt, 0x80 means interrupt the kernal to make our system calls
+    jmp increment_loop
 
 
 section .bss
@@ -200,15 +205,20 @@ section .bss
 section .global
     loop_end dd 100 ; only run 100 iteration
 
-    fizz_word db "Fizz"
+    fizz_word db "Fizz" , 10
     fizz_len: equ $ - fizz_word
 
-    buzz_word db "Buzz"
+    buzz_word db "Buzz", 10
     buzz_len: equ $ - buzz_word
 
-    fizzbuzz_word db "Fizzbuzz!"
+    fizzbuzz_word db "Fizzbuzz!", 10
     fizzbuzz_len: equ $ - fizzbuzz_word
 
-    percent_d db "%d", 10, 0 ; 10 is newline, 0 is null
+    format db "%d", 10, 0 ; 10 is newline, 0 is null
+```
+
+```bash
+nasm -f elf -g fizzbuzz.asm
+ld -melf_i386 -dynamic-linker /lib/ld-linux.so.2 -o fizzbuzz fizzbuzz.o -lc
 ```
 ## Congratulations
