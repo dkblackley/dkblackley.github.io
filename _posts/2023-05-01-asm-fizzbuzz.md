@@ -196,7 +196,7 @@ We can't call a function AND send as many variables as we want. Instead we push 
 </div>
 
 
-The stack contains the variables pushed, iter and buzz, and then the return address, or where the function should return to once the "ret" operand is used. There are also two other concepts. The stack pointer (ESP), which always points to the top of the stack and the base pointer (EBP), which points to the "base" of the current function. using these two variables we can work out where our local variables are and where our passed in variables are/return address is. Let us see what the function "find_remainder" looks like:
+The stack contains the variables pushed (iter and buzz) and then the return address, or where the function should return to once the "ret" operand is used. There are also two other concepts. The stack pointer (ESP), which always points to the top of the stack and the base pointer (EBP), which points to the "base" of the current function. using these two variables we can work out where our local variables are and where our passed in variables are/return address is. Let us see what the function "find_remainder" looks like:
 
 ```assembly
 find_remainder:
