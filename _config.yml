@@ -20,7 +20,7 @@ timezone: Europe/London
 
 title: Blackley Blogging # the main title
 
-tagline: My cool as heck blog site. I like Cryptography, Security, Programming and fist-fighting swans  # it will display as the sub-title
+tagline: My cool as heck blog site. I like Cryptography, Information Security, Programming and committing tax fraud  # it will display as the sub-title
 
 description: >- # used by seo meta and the atom feed
   My name is Daniel Blackley, welcome to my blog! I talk about random tech-based projects I have going on. Most of my interests are Security related.
