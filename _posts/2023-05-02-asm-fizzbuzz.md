@@ -188,7 +188,7 @@ We can't call a function AND send as many variables as we want. Instead we push 
 
 <div align="center">
 
-<img src="https://external-preview.redd.it/-LQTl5g65wqOyIJkw1zY4dQEza85totFst0tlQnkxto.jpg?auto=webp&v=enabled&s=a80c38733a9949baf7e8b514514e8b906c3fac1a" class="img-responsive" alt="Byte rotations">
+<img src="https://raw.githubusercontent.com/dkblackley/dkblackley.github.io/main/assets/image/stack_pointer.png" class="img-responsive" alt="Byte rotations">
 
 </div>
 
@@ -223,7 +223,7 @@ find_remainder:
 
 <div align="center">
 
-<img src="https://external-preview.redd.it/-LQTl5g65wqOyIJkw1zY4dQEza85totFst0tlQnkxto.jpg?auto=webp&v=enabled&s=a80c38733a9949baf7e8b514514e8b906c3fac1a" class="img-responsive" alt="Byte rotations">
+<img src="https://github.com/dkblackley/dkblackley.github.io/blob/main/assets/image/stack_pointer_ret.png?raw=true" class="img-responsive" alt="Byte rotations">
 
 </div>
 
