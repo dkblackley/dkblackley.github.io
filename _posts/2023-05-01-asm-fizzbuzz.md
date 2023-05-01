@@ -86,7 +86,7 @@ section .global
     format db "%d", 10, 0 ; 10 is newline, 0 is null
 ```
 
-The first section is the previously mentioned bss section. Here we reserve 4 bytes (or 32 bits) for the factor that "Fizz" should be printed out on, 4 bytes for the factor that "Buzz" should be printed out on and 4 bytes the the loop counter or current iteration. We then also store our strings as globals, which we did previously as well.
+The first section is the previously mentioned bss section. Here we reserve 4 bytes (or 32 bits) for the factor that "Fizz" should be printed out on, 4 bytes for the factor that "Buzz" should be printed out on and 4 bytes the the loop counter or current iteration. We then also store our strings as globals, which we did previously.
 
 ```assembly
 section .text
