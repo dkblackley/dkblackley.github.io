@@ -272,7 +272,7 @@ cmp eax, 0 ; if we can divide by fizz
     je print_fizz
 ```
 
-We could just label the area we want to jump to, which would be better, but I wanted to do this to emphasize the point that labels are simply memory addresses and a compiler that can keep track of these numbers could just do this instead. With all this knowledge you should be able to interpret the entire program, but lets look at the loop and the call to printf:
+We could just label the area we want to jump to, which would be better, but I wanted to do this to emphasize the point that labels are simply memory addresses and a compiler that can keep track of everything could just do this instead. With all this knowledge you should be able to interpret the entire program, but lets look at the loop and the call to printf:
 
 
 ```assembly
