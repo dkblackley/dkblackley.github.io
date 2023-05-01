@@ -449,7 +449,7 @@ Note that we dynamically link the 32 bit libraries for C "/lib/ld-linux.so.2" wh
 
 ## Congratulations
 
-Well you made it to the end. I don't really know why I tried this and I don't really know why you read this. I just have a headache. Apologies for this over complicated and simplified explanation of assembly, but at least I won't need to go through this again in the future. 
+Well you made it to the end. I don't really know why I tried this and I don't really know why you read this. I just have a headache. Apologies for this simultaneously over complicated and simplified explanation of assembly, but at least I won't need to go through this again in the future. 
 
 See you next time.
 
