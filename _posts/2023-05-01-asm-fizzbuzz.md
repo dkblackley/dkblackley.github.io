@@ -99,7 +99,7 @@ _start:
     mov dword [iter], 1 ; start on the 1st iteration 
 ```
 
-Here we see our our text section which defines the _start label and an external symbol, "printf". This is the printf from the C standard library, but we must define that this symbol is external here and then the linker will link this symbol to the printf we all know and love. More on that later. We then perform mov operands to set our changing variables. Of note is the square brackets. These are the equivalent of de-referencing a pointer in C, without them we wouldn't access that data at the memory location, but instead the memory location itself. The last thing to mention is the "_start:" label. This label helps the assembler work out where things are. We can also use these to define other areas that we might want to jump to, or jump out of. This is particularly handy if we wanted to, say, run a loop:
+Here we see our our text section which defines the _start label and an external symbol, "printf". This is the printf from the C standard library, but we must define that this symbol is external here and then the linker will link this symbol to the printf we all know and love. More on that later. We then perform mov operands to set our changing variables. Of note is the square brackets. These are the equivalent of de-referencing a pointer in C, without them we wouldn't be accessing that data directly, but instead the memory location of that data. The last thing to mention is the "_start:" label. This label helps the assembler work out where things are. We can also use these to define other areas that we might want to jump to, or jump out of. This is particularly handy if we wanted to, say, run a loop:
 
 ```assembly
 MAIN_LOOP:
