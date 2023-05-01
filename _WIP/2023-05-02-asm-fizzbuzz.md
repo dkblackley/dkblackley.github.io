@@ -231,7 +231,67 @@ We could now push things like local variables or access our parameters, which we
 
 ### Conditional statements
 
-We can now access that remainder by peaking into 
+We can now access that remainder by accessing the data register:
+
+```assembly
+    ; as an aside, pushl is the same as push, we just specify that we're using a long value, which can usually be inferred
+    push iter ; push current iteration onto the stack (first param)
+    push fizz ; push fizz onto the stack (second param)
+
+    call find_remainder
+
+    cmp eax, 0 ; if we can divide by fizz
+    jne $ + 28 ; if it's not equal, don't bother forming the next comparisons
+```
+
+We access the eax register using the cmp compare, to compare if the eax register stores a 0. If eax does have a zero, then the remainder was zero, therefore the current iteration has the value of fizz as one of it's factors. The CPU has a [series of flags](https://en.wikipedia.org/wiki/FLAGS_register) that it uses to determine the result of arithmetic operations. For example, if the two values are in fact equal, the zero flag would be set to 1. Another example would be that if the leftmost bit of the last arithmetic operation was set to 1, then the sign flag would be 1 indicate that it's a negative number. Using a combination of flags, we can determine the result of the last operation. We then use the [various jump commands]() that will jump to a location based on the state of these CPU flags. In our case we use jump if not equal. This jump if not equal jumps to the current location ($) + 28. We choose 28 as the next compare statement takes up exactly 28 bytes of space:
+
+```assembly
+cmp eax, 0 ; if we can divide by fizz
+    jne $ + 28 ; if it's not equal, don't bother forming the next comparisons
+
+    push iter
+    push buzz
+    call find_remainder
+
+    cmp eax, 0 ; if we can divide by buzz
+    je print_fizzbuzz
+    je $ + 48 ; jump past the next cmp statements
+
+    push iter 
+    push fizz 
+
+    call find_remainder
+
+    cmp eax, 0 ; if we can only divide by fizz
+    je print_fizz
+```
+
+We could just label the area we want to jump to, which would be better, but I wanted to do this to emphasize the point that labels are simply memory addresses and a compiler that can keep track of these numbers could just do this instead. With all this knowledge you should be able to interpret the entire program, but lets look at the loop and the call to printf:
+
+
+```assembly
+   ; Call printf.
+    mov eax, [iter]    ; "%d" is pushed onto the stack
+    push eax           ; The number to print is pushed onto the stack
+    push format
+    call  printf
+    add esp, 8 ; printf doesn't clean up the stack for us, we must remove our previously pushed params 
+    jmp increment_loop
+
+increment_loop:
+    inc dword [iter] ; Increment iteration number
+
+    cmp dword [iter], 100
+    jne MAIN_LOOP
+
+    mov eax, 1 ; Move 1 into accumulator, which is sys exit on linux
+    mov ebx, 0 ; exit code 0
+    int 0x80
+```
+
+As you may know, printf takes in as many args as you pass it. Here we simply push "%d\n" onto the stack and then the number to print. The after the call trigger you should see the number pop out. We then unconditionally jump to increment_loop, which isn't actually required here as the machine would naturally tick over to that section at after point. Regardless, it's good practice. Let's see if you can't decipher what increment_loop does after reading this article, you may need to look into what the inc operand does. Full code below:
+
 
 ```assembly
 section .text
@@ -373,8 +433,19 @@ section .global
     format db "%d", 10, 0 ; 10 is newline, 0 is null
 ```
 
+Now you can assemble and link this with:
+
 ```bash
 nasm -f elf -g fizzbuzz.asm
 ld -melf_i386 -dynamic-linker /lib/ld-linux.so.2 -o fizzbuzz fizzbuzz.o -lc
 ```
+
+Note that we dynamically link the 32 bit libraries for C "/lib/ld-linux.so.2" which points our call to printf at the right place. You may need to install the 32 bit libraries for you system if you want to run this.
+
 ## Congratulations
+
+Well you made it to the end. I don't really know why I tried this and I don't really know why you read this. I just have a headache. Apologies for this over complicated and simplified explanation of assembly, but at least I won't need to go through this again in the future. 
+
+See you next time.
+
+:^)
