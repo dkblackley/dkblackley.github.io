@@ -17,7 +17,7 @@ version-control t)
  '(custom-safe-themes
    '("7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(package-selected-packages
-   '(toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
+   '(rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -31,15 +31,19 @@ version-control t)
 (add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/"))
 (package-initialize)
 
-(require 'neotree)
-(global-set-key [f8] 'neotree-toggle)
-
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 (eval-and-compile
   (setq use-package-always-ensure t
         use-package-expand-minimally t))
+
+(use-package exec-path-from-shell
+  :ensure
+  :init (exec-path-from-shell-initialize))
+
+(require 'neotree)
+(global-set-key [f8] 'neotree-toggle)
 
 (setq lsp-enable-snippet nil)
 (use-package lsp-mode
@@ -142,10 +146,6 @@ version-control t)
 
 
 (use-package toml-mode :ensure)
-
-(use-package exec-path-from-shell
-  :ensure
-  :init (exec-path-from-shell-initialize))
 
   (require 'dap-lldb)
   (require 'dap-gdb-lldb)
