@@ -13,11 +13,11 @@ version-control t)
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(solarized-dark-high-contrast))
+ '(custom-enabled-themes '(modus-vivendi))
  '(custom-safe-themes
    '("7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(package-selected-packages
-   '(rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
+   '(exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -41,6 +41,11 @@ version-control t)
 (use-package exec-path-from-shell
   :ensure
   :init (exec-path-from-shell-initialize))
+
+(use-package neotree
+  :ensure)
+(use-package projectile
+  :ensure)
 
 (require 'neotree)
 (global-set-key [f8] 'neotree-toggle)
@@ -120,8 +125,15 @@ version-control t)
   (:map global-map
   ("C-c d" . dap-debug)))
 
+;; --------------------------------------- DOCKER SETUP ------------------------------
+
+(use-package docker
+  :ensure t
+  :bind ("C-c C-c d" . docker))
 
 ;; --------------------------------------- PYTHON SETUP ------------------------------
+
+(require 'dap-cpptools)
 
 (use-package lsp-pyright
   :hook (python-mode . (lambda () (require 'lsp-pyright)))
@@ -144,22 +156,58 @@ version-control t)
 
 ;; -------------------------- RUST SETUP -----------------------
 
+;; (setq dap-gdb-lldb-path "~/.emacs-extras/webfreak.debug-0.26.1.vsix")
 
-(use-package toml-mode :ensure)
+;; (require 'dap-gdb-lldb)
 
-  (require 'dap-lldb)
-  (require 'dap-gdb-lldb)
-  ;; installs .extension/vscode
-  (dap-gdb-lldb-setup)
-  (dap-register-debug-template
-   "Rust::LLDB Run Configuration"
-   (list :type "lldb-vscode"
-         :request "launch"
-         :name "LLDB::Run"
-	 :gdbpath "rust-lldb"
-         :target nil
-         :cwd nil))
+;; ;; Still need to do dap-cpptools-setup, but I think those come from microsoft. could zip my emacs extension folder
+;; (use-package toml-mode :ensure)
+;;     (dap-register-debug-template "Rust::GDB Run Configuration"
+;;                              (list :type "gdb"
+;;                                    :request "launch"
+;;                                    :name "GDB::Run"
+;;                            :gdbpath "/home/yelnat/.cargo/bin/rust-gdb"
+;;                                    :target nil
+;;                                    :cwd nil))
+;;   (require 'dap-lldb)
+;;   (require 'dap-gdb-lldb)
+;;   ;; installs .extension/vscode
+;;   (dap-gdb-lldb-setup)
+;;   (dap-register-debug-template
+;;    "Rust::GDB Run Configuration"
+;;    (list :type "gdb"
+;;          :request "launch"
+;;          :name "LLDB::Run"
+;; 	 :gdbpath "rust-lldb"
+;;          :target nil
+;;          :cwd nil))
 
+
+;  (setq dap-cpptools-extension-version "1.17.1")
+
+  (with-eval-after-load 'lsp-rust
+    (require 'dap-cpptools))
+
+;; Also have to install mono and nevermind?
+  (with-eval-after-load 'dap-cpptools
+    ;; Add a template specific for debugging Rust programs.
+    ;; It is used for new projects, where I can M-x dap-edit-debug-template
+    (dap-register-debug-template "Rust::CppTools Run Configuration"
+                                 (list :type "cppdbg"
+                                       :request "launch"
+                                       :name "Rust::Run"
+                                       :MIMode "gdb"
+                                       :miDebuggerPath "rust-gdb"
+                                       :environment []
+                                       :program "${workspaceFolder}/target/debug/hello / replace with binary"
+                                       :cwd "${workspaceFolder}"
+                                       :console "external"
+                                       :dap-compilation "cargo build"
+                                       :dap-compilation-dir "${workspaceFolder}")))
+
+  (with-eval-after-load 'dap-mode
+    (setq dap-default-terminal-kind "integrated") ;; Make sure that terminal programs open a term for I/O in an Emacs buffer
+    (dap-auto-configure-mode +1))
 
 (use-package rustic
   :ensure
