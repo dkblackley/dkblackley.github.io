@@ -1,3 +1,5 @@
+(setq debug-on-error t)
+
 ; Makes several backups of the init file
 (setq
 backup-by-copying t ; don't clobber symlinks
@@ -17,7 +19,7 @@ version-control t)
  '(custom-safe-themes
    '("7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(package-selected-packages
-   '(exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
+   '(alect-themes exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -138,9 +140,9 @@ version-control t)
 (use-package lsp-pyright
   :hook (python-mode . (lambda () (require 'lsp-pyright)))
   :init (when (executable-find "python3")
-          (setq lsp-pyright-python-executable-cmd "python3")
-	  (setq lsp-pyright-multi-root nil)
-	  (setq lsp-pyright-auto-search-paths nil)))
+          (setq lsp-pyright-python-executable-cmd "python3")))
+;;	  (setq lsp-pyright-multi-root nil)
+;;	  (setq lsp-pyright-auto-search-paths nil)))
 
 (setf (lsp-session-folders-blacklist (lsp-session)) nil)
 
@@ -148,7 +150,32 @@ version-control t)
 (require 'dap-python)
 ;; if you installed debugpy, you need to set this
 ;; https://github.com/emacs-lsp/dap-mode/issues/306
+;; Gotta run pip install debugpy and maybe pip install pip install "python-lsp-server[all]"
 (setq dap-python-debugger 'debugpy)
+
+;; (setq python-shell-interpreter "/usr/local/bin/python3.10")
+;; (setq python-shell-exec-path "/usr/local/bine/python3.10")
+
+;; (dap-register-debug-template "Python template"
+;;   (list :type "python"
+;;         :args "-i"
+;;         :cwd nil
+;;         :env '(("DEBUG" . "1"))
+;;         :target-module (expand-file-name "${workspaceFolder}/target/debug/hello / replace with main.py")
+;;         :request "launch"
+;;         :name "My App"))
+
+;; (dap-register-debug-template
+;;  (list :type "python"
+;;        :args ""
+;;        :cwd nil
+;;        :module nil
+;;        ;; :program "/home/kyoncho/.temp/test.py"
+;;        :request "launch"
+;;        :environment-variables '(("FOO" . "BAR"))
+;;        :name "Python :: Run Configuration"
+;;        :hostName "localhost"
+;;        :host "localhost"))
 
 
 ;; (require 'dap-gdb-lldb)
@@ -171,7 +198,7 @@ version-control t)
 ;;                                    :cwd nil))
 ;;   (require 'dap-lldb)
 ;;   (require 'dap-gdb-lldb)
-;;   ;; installs .extension/vscode
+;;   ;; Installs .extension/vscode
 ;;   (dap-gdb-lldb-setup)
 ;;   (dap-register-debug-template
 ;;    "Rust::GDB Run Configuration"
