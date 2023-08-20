@@ -15,11 +15,11 @@ version-control t)
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(modus-vivendi))
+ '(custom-enabled-themes '(base16-3024))
  '(custom-safe-themes
-   '("7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+   '("039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(package-selected-packages
-   '(alect-themes exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
+   '(base16-theme alect-themes exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -123,9 +123,13 @@ version-control t)
   :config
   (dap-ui-mode)
   (dap-ui-controls-mode 1)
+  (require 'dap-python)
+  (setq dap-python-debugger 'debugpy)
   :bind
   (:map global-map
-  ("C-c d" . dap-debug)))
+	("C-c d" . dap-debug)))
+
+(use-package magit)
 
 ;; --------------------------------------- DOCKER SETUP ------------------------------
 
@@ -139,43 +143,28 @@ version-control t)
 
 (use-package lsp-pyright
   :hook (python-mode . (lambda () (require 'lsp-pyright)))
-  :init (when (executable-find "python3")
-          (setq lsp-pyright-python-executable-cmd "python3")))
-;;	  (setq lsp-pyright-multi-root nil)
-;;	  (setq lsp-pyright-auto-search-paths nil)))
+  :init (when (executable-find "python")
+          (setq lsp-pyright-python-executable-cmd "python")
+	  (setq lsp-pyright-multi-root nil)
+	  (setq lsp-pyright-auto-search-paths nil)))
 
-(setf (lsp-session-folders-blacklist (lsp-session)) nil)
+;; (setf (lsp-session-folders-blacklist (lsp-session)) nil)
 
 
-(require 'dap-python)
 ;; if you installed debugpy, you need to set this
 ;; https://github.com/emacs-lsp/dap-mode/issues/306
 ;; Gotta run pip install debugpy and maybe pip install pip install "python-lsp-server[all]"
-(setq dap-python-debugger 'debugpy)
 
 ;; (setq python-shell-interpreter "/usr/local/bin/python3.10")
 ;; (setq python-shell-exec-path "/usr/local/bine/python3.10")
 
-;; (dap-register-debug-template "Python template"
-;;   (list :type "python"
-;;         :args "-i"
-;;         :cwd nil
-;;         :env '(("DEBUG" . "1"))
-;;         :target-module (expand-file-name "${workspaceFolder}/target/debug/hello / replace with main.py")
-;;         :request "launch"
-;;         :name "My App"))
-
-;; (dap-register-debug-template
-;;  (list :type "python"
-;;        :args ""
-;;        :cwd nil
-;;        :module nil
-;;        ;; :program "/home/kyoncho/.temp/test.py"
-;;        :request "launch"
-;;        :environment-variables '(("FOO" . "BAR"))
-;;        :name "Python :: Run Configuration"
-;;        :hostName "localhost"
-;;        :host "localhost"))
+(dap-register-debug-template "Python template"
+  (list :type "python"
+        :args ""
+        :cwd "/home/yelnat/Documents/programmin/python-test/"
+       ; :target-module (expand-file-name "~/Documents/programmin/python-test/test.py")
+        :request "launch"
+        :name "My App"))
 
 
 ;; (require 'dap-gdb-lldb)
