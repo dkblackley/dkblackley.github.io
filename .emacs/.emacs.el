@@ -15,9 +15,9 @@ version-control t)
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(base16-3024))
+ '(custom-enabled-themes '(base16-google-dark))
  '(custom-safe-themes
-   '("039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+   '("2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(package-selected-packages
    '(base16-theme alect-themes exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
 (custom-set-faces
@@ -136,6 +136,7 @@ version-control t)
 (use-package docker
   :ensure t
   :bind ("C-c C-c d" . docker))
+(require 'dockerfile-mode)
 
 ;; --------------------------------------- PYTHON SETUP ------------------------------
 
@@ -165,6 +166,18 @@ version-control t)
        ; :target-module (expand-file-name "~/Documents/programmin/python-test/test.py")
         :request "launch"
         :name "My App"))
+
+;; (dap-debug
+;;  (list :type "python"
+;;        :args ""
+;;        :cwd nil
+;;        :module nil
+;;        :program "~/Documents/programmin/python-test/test.py"
+;;        :request "launch"
+;;        :environment-variables '(("FOO" . "BAR"))
+;;        :name "Python :: Run Configuration please"
+;;        :hostName "localhost"
+;;        :host "localhost"))
 
 
 ;; (require 'dap-gdb-lldb)
