@@ -18,6 +18,7 @@ version-control t)
  '(custom-enabled-themes '(base16-google-dark))
  '(custom-safe-themes
    '("2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+ '(inhibit-startup-screen t)
  '(package-selected-packages
    '(spacemacs-theme yaml-mode dockerfile-mode magit base16-theme alect-themes exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
 (custom-set-faces
@@ -191,14 +192,16 @@ version-control t)
 ;; (require 'dap-gdb-lldb)
 
 ;; ;; Still need to do dap-cpptools-setup, but I think those come from microsoft. could zip my emacs extension folder
-;; (use-package toml-mode :ensure)
-;;     (dap-register-debug-template "Rust::GDB Run Configuration"
-;;                              (list :type "gdb"
-;;                                    :request "launch"
-;;                                    :name "GDB::Run"
-;;                            :gdbpath "/home/yelnat/.cargo/bin/rust-gdb"
-;;                                    :target nil
-;;                                    :cwd nil))
+;; Needs node, and you have to specify absolute path to target
+(require 'dap-gdb-lldb)
+(use-package toml-mode :ensure)
+    (dap-register-debug-template "Rust::GDB Run Configuration"
+                             (list :type "gdb"
+                                   :request "launch"
+                                   :name "GDB::Run"
+                           :gdbpath "/home/temp/.cargo/bin/rust-gdb"
+                                   :target nil
+                                   :cwd nil))
 ;;   (require 'dap-lldb)
 ;;   (require 'dap-gdb-lldb)
 ;;   ;; Installs .extension/vscode
@@ -219,25 +222,25 @@ version-control t)
     (require 'dap-cpptools))
 
 ;; Also have to install mono and nevermind?
-  (with-eval-after-load 'dap-cpptools
-    ;; Add a template specific for debugging Rust programs.
-    ;; It is used for new projects, where I can M-x dap-edit-debug-template
-    (dap-register-debug-template "Rust::CppTools Run Configuration"
-                                 (list :type "cppdbg"
-                                       :request "launch"
-                                       :name "Rust::Run"
-                                       :MIMode "gdb"
-                                       :miDebuggerPath "rust-gdb"
-                                       :environment []
-                                       :program "${workspaceFolder}/target/debug/hello / replace with binary"
-                                       :cwd "${workspaceFolder}"
-                                       :console "external"
-                                       :dap-compilation "cargo build"
-                                       :dap-compilation-dir "${workspaceFolder}")))
+  ;; (with-eval-after-load 'dap-cpptools
+  ;;   ;; Add a template specific for debugging Rust programs.
+  ;;   ;; It is used for new projects, where I can M-x dap-edit-debug-template
+  ;;   (dap-register-debug-template "Rust::CppTools Run Configuration"
+  ;;                                (list :type "cppdbg"
+  ;;                                      :request "launch"
+  ;;                                      :name "Rust::Run"
+  ;;                                      :MIMode "gdb"
+  ;;                                      :miDebuggerPath "rust-gdb"
+  ;;                                      :environment []
+  ;;                                      :program "${workspaceFolder}/target/debug/hello / replace with binary"
+  ;;                                      :cwd "${workspaceFolder}"
+  ;;                                      :console "external"
+  ;;                                      :dap-compilation "cargo build"
+  ;;                                      :dap-compilation-dir "${workspaceFolder}")))
 
-  (with-eval-after-load 'dap-mode
-    (setq dap-default-terminal-kind "integrated") ;; Make sure that terminal programs open a term for I/O in an Emacs buffer
-    (dap-auto-configure-mode +1))
+  ;; (with-eval-after-load 'dap-mode
+  ;;   (setq dap-default-terminal-kind "integrated") ;; Make sure that terminal programs open a term for I/O in an Emacs buffer
+  ;;   (dap-auto-configure-mode +1))
 
 (use-package rustic
   :ensure
