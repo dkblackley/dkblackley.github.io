@@ -62,7 +62,7 @@ version-control t)
   ;; what to use when checking on-save. "check" is default, I prefer clippy
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-eldoc-render-all t)
-  (lsp-idle-delay 0.6)
+  (lsp-idle-delay 0.1)
   ;; enable / disable the hints as you prefer:
   (lsp-inlay-hint-enable t)
   ;; These are optional configurations. See https://emacs-lsp.github.io/lsp-mode/page/lsp-rust-analyzer/#lsp-rust-analyzer-display-chaining-hints for a full list
@@ -131,6 +131,15 @@ version-control t)
 	("C-c d" . dap-debug)))
 
 (use-package magit)
+
+(electric-pair-mode 1)
+;; make electric-pair-mode work on more brackets
+(setq electric-pair-pairs '(
+                            (?\" . ?\")
+			    (?\' . ?\')
+			    (?\( . ?\))
+                            (?\{ . ?\})
+			    (?\[ . ?\])))
 
 ;; --------------------------------------- DOCKER SETUP ------------------------------
 
