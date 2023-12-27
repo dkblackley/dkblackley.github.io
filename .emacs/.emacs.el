@@ -11,6 +11,7 @@ kept-old-versions 2
 version-control t)
 
 (set-face-attribute 'default nil :height 130)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -54,6 +55,10 @@ version-control t)
 
 (require 'neotree)
 (global-set-key [f8] 'neotree-toggle)
+
+(setq treemacs--width-is-locked nil)
+(setq treemacs-width-is-initially-locked nil)
+(setq treemacs-width 22)
 
 (setq lsp-enable-snippet nil)
 (use-package lsp-mode
