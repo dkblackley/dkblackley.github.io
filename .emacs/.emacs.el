@@ -10,6 +10,8 @@ kept-new-versions 6
 kept-old-versions 2
 version-control t)
 
+(set-face-attribute 'default (selected-frame) :height 130)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
