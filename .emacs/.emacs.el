@@ -55,6 +55,7 @@ version-control t)
 
 (require 'neotree)
 (global-set-key [f8] 'neotree-toggle)
+(setq-default neo-show-hidden-files t)
 
 (setq treemacs--width-is-locked nil)
 (setq treemacs-width-is-initially-locked nil)
