@@ -13,6 +13,10 @@ version-control t)
 (set-face-attribute 'default nil :height 130)
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 
+(defun seq-keep (function sequence)
+  "Apply FUNCTION to SEQUENCE and return the list of all the non-nil results."
+  (delq nil (seq-map function sequence)))
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
