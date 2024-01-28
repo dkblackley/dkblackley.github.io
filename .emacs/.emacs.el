@@ -41,6 +41,9 @@ version-control t)
 (add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/"))
 (package-initialize)
 
+(when (not package-archive-contents)
+    (package-refresh-contents))
+
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
