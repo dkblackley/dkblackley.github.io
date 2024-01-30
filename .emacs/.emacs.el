@@ -69,8 +69,11 @@ version-control t)
 (setq treemacs-width 22)
 
 (setq lsp-enable-snippet nil)
+
 (use-package lsp-mode
-  :hook ((c++-mode python-mode) . lsp-deferred)
+  :init
+  (setq lsp-log-io t)
+  :hook ((c++-mode python-mode c-mode) . lsp-deferred)
   :commands lsp
   ;; extra rust commands
   :custom
@@ -88,9 +91,12 @@ version-control t)
   (lsp-rust-analyzer-display-parameter-hints nil)
   (lsp-rust-analyzer-display-reborrow-hints nil)
   :config
-  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
-
-
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+  (lsp-register-client
+   (make-lsp-client :new-connection (lsp-tramp-connection "/usr/local/bin/clangd")
+   :major-modes '(c++-mode)
+   :remote? t
+   :server-id 'clangd-remote)))
 
 (use-package lsp-ui
   :commands lsp-ui-mode
