@@ -224,6 +224,8 @@ version-control t)
 (use-package dockerfile-mode)
 (require 'dockerfile-mode)
 
+(require 'docker-tramp)
+
 ;; --------------------------------------- PYTHON SETUP ------------------------------
 
 (require 'dap-cpptools)
