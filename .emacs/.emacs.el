@@ -1,4 +1,10 @@
-(setq debug-on-error t)
+;; -*- coding: utf-8; lexical-binding: t -*-
+
+;(setq debug-on-error t)
+
+
+; ------------------------------------- EMACS STUFF ---------------------------------------------
+
 
 ; Makes several backups of the init file
 (setq
@@ -10,13 +16,18 @@ kept-new-versions 6
 kept-old-versions 2
 version-control t)
 
-(set-face-attribute 'default nil :height 130)
-(add-hook 'prog-mode-hook 'display-line-numbers-mode)
+;; set font Hack 15 pt
+(set-face-attribute 'default nil
+                    :family "Iosevka"
+                    :height 140)
 
+; Magit is broken on earlier emacs versions, we need to include this line
 (defun seq-keep (function sequence)
   "Apply FUNCTION to SEQUENCE and return the list of all the non-nil results."
   (delq nil (seq-map function sequence)))
 
+; Don't check package signatures... for some reason? I forgot why I did this
+(setq package-check-signature nil)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -24,10 +35,10 @@ version-control t)
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(base16-google-dark))
  '(custom-safe-themes
-   '("2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+   '("dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(inhibit-startup-screen t)
- '(package-selected-packages
-   '(spacemacs-theme yaml-mode dockerfile-mode magit base16-theme alect-themes exec-path-from-shell docker flycheck rustic dap-mode toml-mode projectile neotree company lsp-pyright lsp-ui lsp-mode solarized-theme)))
+ '(package-selected-packages '(lsp-treemacs helm-lsp hydra avy which-key helm-xref))
+ '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -41,9 +52,7 @@ version-control t)
 (add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/"))
 (package-initialize)
 
-(when (not package-archive-contents)
-    (package-refresh-contents))
-
+; Use-package for easy package management
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
@@ -51,14 +60,62 @@ version-control t)
   (setq use-package-always-ensure t
         use-package-expand-minimally t))
 
+; Let GC use 200MB
+(setq gc-cons-threshold 200000000
+      read-process-output-max 10000000 ; Read 10mb from the process
+      treemacs-space-between-root-nodes nil ; Don't put spaces in the f8 menu (I think)
+      company-idle-delay 0.2
+      company-minimum-prefix-length 1
+      lsp-idle-delay 0.5)  ;; let lsp sit idle for half a second
+
+(add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
+(add-to-list 'default-frame-alist '(ns-appearance . dark))
+
+(defalias 'yes-or-no-p 'y-or-n-p)
+(global-set-key (kbd "C-M-<tab>") 'indent-region)
+(global-set-key (kbd "C-z") 'undo)
+
+;--------------------------------- Random packages ----------------------------------
+
+(use-package benchmark-init
+    :ensure
+    :config
+    ;; To disable collection of benchmark data after init is done.
+    (add-hook 'after-init-hook 'benchmark-init/deactivate))
+
+(add-hook 'after-init-hook
+          (lambda () (message "loaded in %s" (emacs-init-time))))
+
+(use-package auctex
+  :ensure)
+
+(use-package goto-last-change
+  :bind (("C-;" . goto-last-change)))
+
+; lsp mode looks for python in bad places, use the shell paths instead
 (use-package exec-path-from-shell
   :ensure
   :init (exec-path-from-shell-initialize))
 
+(use-package emojify :ensure)
+
+; Better parens highlighting
+(use-package rainbow-delimiters
+  :ensure
+  :config
+  (add-hook 'prog-mode-hook 'rainbow-delimiters-mode))
+
 (use-package neotree
   :ensure)
+
 (use-package projectile
   :ensure)
+;; project navigation tools
+(projectile-mode +1)
+;; Recommended keymap prefix on macOS
+;; (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+;; Recommended keymap prefix on Windows/Linux
+(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
 
 (require 'neotree)
 (global-set-key [f8] 'neotree-toggle)
@@ -66,13 +123,85 @@ version-control t)
 
 (setq treemacs--width-is-locked nil)
 (setq treemacs-width-is-initially-locked nil)
-(setq treemacs-width 22)
+(setq treemacs-width 14) ; Make the side bar a bit smaller
 
-(setq lsp-enable-snippet nil)
+(use-package flycheck :ensure)
+
+
+; Checks that your english looks good. Run pip install proselint
+(flycheck-define-checker proselint
+  "A linter for prose."
+  :command ("proselint" source-inplace)
+  :error-patterns
+  ((warning line-start (file-name) ":" line ":" column ": "
+            (id (one-or-more (not (any " "))))
+            (message (one-or-more not-newline)
+                     (zero-or-more "\n" (any " ") (one-or-more not-newline)))
+            line-end))
+  :modes (text-mode markdown-mode gfm-mode org-mode))
+
+(use-package writegood-mode
+    :bind ("C-c g" . writegood-mode)
+    :config
+    (add-to-list 'writegood-weasel-words "actionable"))
+
+(use-package notmuch :ensure) ; Mail client
+
+; For some reason default emacs doesn't support markdown
+(use-package markdown-mode
+  :ensure
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("\\.markdown\\'" . markdown-mode))
+  :init (setq markdown-command "multimarkdown"))
+
+(use-package magit :ensure)
+
+(use-package git-gutter
+  :ensure
+  :config
+  (global-git-gutter-mode 't))
+
+(use-package smartparens
+  :config
+  (add-hook 'prog-mode-hook 'smartparens-mode))
+
+;; Alternatively:
+;; (electric-pair-mode 1)
+;; ;; make electric-pair-mode work on more brackets
+;; (setq electric-pair-pairs '(
+;;                             (?\" . ?\")
+;; 			    (?\' . ?\')
+;; 			    (?\( . ?\))
+;;                             (?\{ . ?\})
+;; 			    (?\[ . ?\])))
+
+(use-package yasnippet
+  :ensure
+  :config
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook 'yas-minor-mode)
+  (add-hook 'text-mode-hook 'yas-minor-mode))
+
+(yas-global-mode 1)
+
+(use-package json-mode
+  :ensure t)
+
+;--------------------------------- LANGUAGE SERVERS ----------------------------------
+
+; Allegedly this is faster than using hash tables
+(setenv "LSP_USE_PLISTS" "true")
+
+; Make sure we ain't logging SHIT
+(setq lsp-log-io nil) ; if set to true can cause a performance hit
+
+(setq lsp-enable-snippet t)
 
 (use-package lsp-mode
   :init
-  (setq lsp-log-io t)
+  (setq lsp-log-io nil)
   :hook ((c++-mode python-mode c-mode) . lsp-deferred)
   :commands lsp
   ;; extra rust commands
@@ -80,7 +209,6 @@ version-control t)
   ;; what to use when checking on-save. "check" is default, I prefer clippy
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-eldoc-render-all t)
-  (lsp-idle-delay 0.1)
   ;; enable / disable the hints as you prefer:
   (lsp-inlay-hint-enable t)
   ;; These are optional configurations. See https://emacs-lsp.github.io/lsp-mode/page/lsp-rust-analyzer/#lsp-rust-analyzer-display-chaining-hints for a full list
@@ -88,24 +216,16 @@ version-control t)
   (lsp-rust-analyzer-display-chaining-hints t)
   (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
   (lsp-rust-analyzer-display-closure-return-type-hints t)
-  (lsp-rust-analyzer-display-parameter-hints nil)
-  (lsp-rust-analyzer-display-reborrow-hints nil)
+  (lsp-rust-analyzer-display-parameter-hints t) ; This can get messy sometims
+  (lsp-rust-analyzer-display-reborrow-hints t)
   :config
-  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-  (lsp-register-client
-   (make-lsp-client :new-connection (lsp-tramp-connection "/usr/local/bin/clangd")
-   :major-modes '(c++-mode)
-   :remote? t
-   :server-id 'clangd-remote)))
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
 
-(defun start-file-process-shell-command@around (start-file-process-shell-command name buffer &rest args)
-      "Start a program in a subprocess.  Return the process object for it.
-       Similar to `start-process-shell-command', but calls `start-file-process'."
-      ;; On remote hosts, the local `shell-file-name' might be useless.
-      (let ((command (mapconcat 'identity args " ")))
-        (funcall start-file-process-shell-command name buffer command)))
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  (require 'dap-cpptools)
+  (yas-global-mode))
 
-    (advice-add 'start-file-process-shell-command :around #'start-file-process-shell-command@around)
 
 (use-package lsp-ui
   :commands lsp-ui-mode
@@ -119,22 +239,14 @@ version-control t)
   (setq lsp-ui-doc-include-signature t)
   (setq lsp-ui-doc-border (face-foreground 'default))
   (setq lsp-ui-sideline-show-code-actions t)
-  (setq lsp-ui-sideline-delay 0.05))
+  (setq lsp-ui-sideline-delay 0.5))
 
 ;; use company mode in every single buffer (So i don't have to keep writing it in the shell)
 (add-hook 'after-init-hook 'global-company-mode)
 
-;; project navigation tools
-(projectile-mode +1)
-;; Recommended keymap prefix on macOS
-;; (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-;; Recommended keymap prefix on Windows/Linux
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-
 (use-package company
   :ensure
   :custom
-  (company-idle-delay 0.2) ;; how long to wait until popup
   ;; (company-begin-commands nil) ;; uncomment to disable popup
   ;; I like defaults, M-n, M-p :>
   ;; :bind
@@ -144,10 +256,55 @@ version-control t)
   ;;	      ("M-<". company-select-first)
 ;;	      ("M->". company-select-last)))
   (:map company-mode-map
-	("<tab>". tab-indent-or-complete)
+	("<tab>". tab-indent-or-complete) ; Hit tab to autocomplete, escape to cancel
 	("TAB". tab-indent-or-complete)))
 
-(use-package flycheck :ensure)
+;; Tell lsp to stay out of company mode
+(setq lsp-completion-provider :none)
+
+(use-package yasnippet-snippets :ensure)
+
+;; Add yasnippet support for all company backends
+;; https://github.com/syl20bnr/spacemacs/pull/179
+(defvar company-mode/enable-yas t
+  "Enable yasnippet for all backends.")
+
+;; (defun company-mode/backend-with-yas (backend)
+;;   (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
+;;       backend
+;;     (append (if (consp backend) backend (list backend))
+;;             '(:with company-yasnippet))))
+
+;; (setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
+
+;; (defun company-yasnippet-or-completion ()
+;;   (interactive)
+;;   (or (do-yas-expand)
+;;       (company-complete-common)))
+
+;; (defun check-expansion ()
+;;   (save-excursion
+;;     (if (looking-at "\\_>") t
+;;       (backward-char 1)
+;;       (if (looking-at "\\.") t
+;;         (backward-char 1)
+;;         (if (looking-at "::") t nil)))))
+
+;; (defun do-yas-expand ()
+;;   (let ((yas/fallback-behavior 'return-nil))
+;;     (yas/expand)))
+
+;; (defun tab-indent-or-complete ()
+;;   (interactive)
+;;   (if (minibufferp)
+;;       (minibuffer-complete)
+;;     (if (or (not yas/minor-mode)
+;;             (null (do-yas-expand)))
+;;         (if (check-expansion)
+;;             (company-complete-common)
+;;           (indent-for-tab-command)))))
+
+;------------------------------------- DEBUGGERS -------------------------------
 
 (use-package dap-mode
   :ensure
@@ -160,84 +317,8 @@ version-control t)
   (:map global-map
 	("C-c d" . dap-debug)))
 
-(use-package magit)
-
-(electric-pair-mode 1)
-;; make electric-pair-mode work on more brackets
-(setq electric-pair-pairs '(
-                            (?\" . ?\")
-			    (?\' . ?\')
-			    (?\( . ?\))
-                            (?\{ . ?\})
-			    (?\[ . ?\])))
-
-(use-package yasnippet
-  :ensure
-  :config
-  (yas-reload-all)
-  (add-hook 'prog-mode-hook 'yas-minor-mode)
-  (add-hook 'text-mode-hook 'yas-minor-mode))
-
-(yas-global-mode 1)
-
-;; Tell lsp to stay out of company mode
-(setq lsp-completion-provider :none)
-
-(use-package yasnippet-snippets)
-
-;; Add yasnippet support for all company backends
-;; https://github.com/syl20bnr/spacemacs/pull/179
-(defvar company-mode/enable-yas t
-  "Enable yasnippet for all backends.")
-
-(defun company-mode/backend-with-yas (backend)
-  (if (or (not company-mode/enable-yas) (and (listp backend) (member 'company-yasnippet backend)))
-      backend
-    (append (if (consp backend) backend (list backend))
-            '(:with company-yasnippet))))
-
-(setq company-backends (mapcar #'company-mode/backend-with-yas company-backends))
-
-(defun company-yasnippet-or-completion ()
-  (interactive)
-  (or (do-yas-expand)
-      (company-complete-common)))
-
-(defun check-expansion ()
-  (save-excursion
-    (if (looking-at "\\_>") t
-      (backward-char 1)
-      (if (looking-at "\\.") t
-        (backward-char 1)
-        (if (looking-at "::") t nil)))))
-
-(defun do-yas-expand ()
-  (let ((yas/fallback-behavior 'return-nil))
-    (yas/expand)))
-
-(defun tab-indent-or-complete ()
-  (interactive)
-  (if (minibufferp)
-      (minibuffer-complete)
-    (if (or (not yas/minor-mode)
-            (null (do-yas-expand)))
-        (if (check-expansion)
-            (company-complete-common)
-          (indent-for-tab-command)))))
-
-;; --------------------------------------- DOCKER SETUP ------------------------------
-
-(use-package docker
-  :ensure t
-  :bind ("C-c C-c d" . docker))
-(use-package dockerfile-mode)
-(require 'dockerfile-mode)
-
-(require 'docker-tramp)
-
 ;; --------------------------------------- PYTHON SETUP ------------------------------
 
-(require 'dap-cpptools)
 
 (use-package lsp-pyright
   :hook (python-mode . (lambda () (require 'lsp-pyright)))
@@ -246,96 +327,46 @@ version-control t)
 	  (setq lsp-pyright-multi-root nil)
 	  (setq lsp-pyright-auto-search-paths nil)))
 
-;; (setf (lsp-session-folders-blacklist (lsp-session)) nil)
 
 
 ;; if you installed debugpy, you need to set this
 ;; https://github.com/emacs-lsp/dap-mode/issues/306
 ;; Gotta run pip install debugpy and maybe pip install pip install "python-lsp-server[all]"
 
-;; (setq python-shell-interpreter "/usr/local/bin/python3.10")
-;; (setq python-shell-exec-path "/usr/local/bine/python3.10")
+(setq python-shell-interpreter "/usr/local/bin/python")
+(setq python-shell-exec-path "/usr/local/bin/python")
 
 (dap-register-debug-template "Python template"
   (list :type "python"
         :args ""
         :cwd "/home/yelnat/Documents/programmin/python-test/"
+	:program "~/Documents/programmin/python-test/test.py"
        ; :target-module (expand-file-name "~/Documents/programmin/python-test/test.py")
         :request "launch"
         :name "My App"))
 
-;; (dap-debug
-;;  (list :type "python"
-;;        :args ""
-;;        :cwd nil
-;;        :module nil
-;;        :program "~/Documents/programmin/python-test/test.py"
-;;        :request "launch"
-;;        :environment-variables '(("FOO" . "BAR"))
-;;        :name "Python :: Run Configuration please"
-;;        :hostName "localhost"
-;;        :host "localhost"))
+;; ;; --------------------------------------- DOCKER SETUP ------------------------------
+
+(use-package docker
+  :ensure t
+  :bind ("C-c C-c d" . docker))
+(use-package dockerfile-mode)
+(require 'dockerfile-mode)
 
 
-;; (require 'dap-gdb-lldb)
+;; ;; -------------------------- RUST SETUP -----------------------
 
-
-;; -------------------------- RUST SETUP -----------------------
-
-;; (setq dap-gdb-lldb-path "~/.emacs-extras/webfreak.debug-0.26.1.vsix")
-
-;; (require 'dap-gdb-lldb)
-
-;; ;; Still need to do dap-cpptools-setup, but I think those come from microsoft. could zip my emacs extension folder
-;; Needs node, and you have to specify absolute path to target
-(require 'dap-gdb-lldb)
 (use-package toml-mode :ensure)
-    (dap-register-debug-template "Rust::GDB Run Configuration"
+(dap-register-debug-template "Rust::GDB Run Configuration"
                              (list :type "gdb"
                                    :request "launch"
                                    :name "GDB::Run"
-                           :gdbpath "/home/temp/.cargo/bin/rust-gdb"
+				   :gdbpath "~/.cargo/bin/rust-gdb"
                                    :target nil
-                                   :cwd nil))
-;;   (require 'dap-lldb)
-;;   (require 'dap-gdb-lldb)
-;;   ;; Installs .extension/vscode
-;;   (dap-gdb-lldb-setup)
-;;   (dap-register-debug-template
-;;    "Rust::GDB Run Configuration"
-;;    (list :type "gdb"
-;;          :request "launch"
-;;          :name "LLDB::Run"
-;; 	 :gdbpath "rust-lldb"
-;;          :target nil
-;;          :cwd nil))
+                                   :program "${workspaceFolder}/target/debug/hello / replace with binary"
+                                   :cwd "${workspaceFolder}"))
 
 
-;  (setq dap-cpptools-extension-version "1.17.1")
-
-  (with-eval-after-load 'lsp-rust
-    (require 'dap-cpptools))
-
-;; Also have to install mono and nevermind?
-  ;; (with-eval-after-load 'dap-cpptools
-  ;;   ;; Add a template specific for debugging Rust programs.
-  ;;   ;; It is used for new projects, where I can M-x dap-edit-debug-template
-  ;;   (dap-register-debug-template "Rust::CppTools Run Configuration"
-  ;;                                (list :type "cppdbg"
-  ;;                                      :request "launch"
-  ;;                                      :name "Rust::Run"
-  ;;                                      :MIMode "gdb"
-  ;;                                      :miDebuggerPath "rust-gdb"
-  ;;                                      :environment []
-  ;;                                      :program "${workspaceFolder}/target/debug/hello / replace with binary"
-  ;;                                      :cwd "${workspaceFolder}"
-  ;;                                      :console "external"
-  ;;                                      :dap-compilation "cargo build"
-  ;;                                      :dap-compilation-dir "${workspaceFolder}")))
-
-  ;; (with-eval-after-load 'dap-mode
-  ;;   (setq dap-default-terminal-kind "integrated") ;; Make sure that terminal programs open a term for I/O in an Emacs buffer
-  ;;   (dap-auto-configure-mode +1))
 
 (use-package rustic
   :ensure
@@ -356,7 +387,8 @@ version-control t)
 
   ;; comment to disable rustfmt on save
   (setq rustic-format-on-save t)
-  (add-hook 'rustic-mode-hook 'rk/rustic-mode-hook))
+  (add-hook 'rustic-mode-hook 'rk/rustic-mode-hook)
+  )
 
 (defun rk/rustic-mode-hook ()
   ;; so that run C-c C-c C-r works without having to confirm, but don't try to
@@ -367,16 +399,18 @@ version-control t)
     (setq-local buffer-save-without-query t))
   (add-hook 'before-save-hook 'lsp-format-buffer nil t))
 
-;; ------------------------- C/C++ SETUP ----------------------
+;; ;; ------------------------- C/C++ SETUP ----------------------
 
 (use-package cmake-mode)
-
-(setq package-selected-packages '(lsp-mode yasnippet lsp-treemacs helm-lsp
-    projectile hydra flycheck company avy which-key helm-xref dap-mode))
 
 (when (cl-find-if-not #'package-installed-p package-selected-packages)
   (package-refresh-contents)
   (mapc #'package-install package-selected-packages))
+
+;----------------------------- HELM ----------------------
+
+(setq package-selected-packages '(lsp-treemacs helm-lsp
+     hydra avy which-key helm-xref))
 
 ;; sample `helm' configuration use https://github.com/emacs-helm/helm/ for details
 (helm-mode)
@@ -385,18 +419,6 @@ version-control t)
 (define-key global-map [remap execute-extended-command] #'helm-M-x)
 (define-key global-map [remap switch-to-buffer] #'helm-mini)
 
-(which-key-mode)
+(which-key-mode) ; auto complete some keybinds
 (add-hook 'c-mode-hook 'lsp)
 (add-hook 'c++-mode-hook 'lsp)
-
-(setq gc-cons-threshold (* 100 1024 1024)
-      read-process-output-max (* 1024 1024)
-      treemacs-space-between-root-nodes nil
-      company-idle-delay 0.0
-      company-minimum-prefix-length 1
-      lsp-idle-delay 0.1)  ;; clangd is fast
-
-(with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
-  (require 'dap-cpptools)
-  (yas-global-mode))
