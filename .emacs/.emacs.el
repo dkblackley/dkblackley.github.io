@@ -214,7 +214,11 @@ version-control t)
 ; For tramp
 (setq lsp-clients-clangd-executable "/usr/bin/clangd")  ;; Adjust if clangd is in a different location
 (setq tramp-verbose 0)
-(setq tramp-methods nil)
+; (setq tramp-methods nil)
+(setq tramp-default-method "ssh")
+(setq tramp-completion-reread-directory-timeout nil)
+(setq remote-file-name-inhibit-cache nil)
+(setq tramp-terminal-type "vt100")
 (require 'tramp)
 
 (use-package lsp-mode
