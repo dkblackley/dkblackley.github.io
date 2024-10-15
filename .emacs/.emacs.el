@@ -5,6 +5,17 @@
 
 ; ------------------------------------- EMACS STUFF ---------------------------------------------
 
+; Tramp speedup?
+(setq tramp-completion-reread-directory-timeout t)
+
+(setq remote-file-name-inhibit-cache nil)
+(setq tramp-verbose 1)
+
+
+; Assume bash cause I use zsh
+(setq tramp-login-shell "bash")
+(setq tramp-remote-shell "/bin/bash")
+
 
 ; Makes several backups of the init file
 (setq
@@ -33,11 +44,12 @@ version-control t)
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(base16-google-dark))
+ '(custom-enabled-themes '(deeper-blue))
  '(custom-safe-themes
-   '("dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+   '("6e13ff2c27cf87f095db987bf30beca8697814b90cd837ef4edca18bdd381901" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(inhibit-startup-screen t)
- '(package-selected-packages '(lsp-treemacs helm-lsp hydra avy which-key helm-xref))
+ '(package-selected-packages
+   '(catppuccin-theme lsp-treemacs helm-lsp hydra avy which-key helm-xref))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -195,9 +207,15 @@ version-control t)
 (setenv "LSP_USE_PLISTS" "true")
 
 ; Make sure we ain't logging SHIT
-(setq lsp-log-io nil) ; if set to true can cause a performance hit
-
+ (setq lsp-log-io nil) ; if set to true can cause a performance hit
+;(setq lsp-log-io t)
 (setq lsp-enable-snippet t)
+
+; For tramp
+(setq lsp-clients-clangd-executable "/usr/bin/clangd")  ;; Adjust if clangd is in a different location
+(setq tramp-verbose 0)
+(setq tramp-methods nil)
+(require 'tramp)
 
 (use-package lsp-mode
   :init
@@ -219,7 +237,12 @@ version-control t)
   (lsp-rust-analyzer-display-parameter-hints t) ; This can get messy sometims
   (lsp-rust-analyzer-display-reborrow-hints t)
   :config
-  (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+  (lsp-register-client
+(make-lsp-client :new-connection (lsp-tramp-connection "/usr/local/bin/clangd")
+:major-modes '(c-mode)
+:remote? t
+:server-id 'clangd-remote)))
 
 (with-eval-after-load 'lsp-mode
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
