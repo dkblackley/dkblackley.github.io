@@ -3,6 +3,15 @@
 ;(setq debug-on-error t)
 
 
+;; MAKE SURE YOU RUN THESE:
+;; pip install proselint
+;; pip install pyright
+;; pip install debugpy
+;; pip install "python-lsp-server[all]"
+;; 
+
+
+
 ; ------------------------------------- EMACS STUFF ---------------------------------------------
 
 ; Tramp speedup?
@@ -46,10 +55,10 @@ version-control t)
  ;; If there is more than one, they won't work right.
  '(custom-enabled-themes '(deeper-blue))
  '(custom-safe-themes
-   '("6e13ff2c27cf87f095db987bf30beca8697814b90cd837ef4edca18bdd381901" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+   '("e6fb17048752ae4f07e8a689f59fb909a7e3008c5db75af3d870b701ce6506ef" "b9628f9ad175d774bfc02f140e7aa058fc0a2f3aa10134125d643eae88b3f36c" "4c877a679cb7c0c17de7267c6440f60403b104a02659634656e9c2722a405f6a" "7f2c832000d6f007e8dc49bd30b5fbb7a4cf2e44b35ce8f6f65be57c59628421" "6e13ff2c27cf87f095db987bf30beca8697814b90cd837ef4edca18bdd381901" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(inhibit-startup-screen t)
  '(package-selected-packages
-   '(catppuccin-theme lsp-treemacs helm-lsp hydra avy which-key helm-xref))
+   '(majapahit-themes blackboard-theme lsp-treemacs helm-lsp hydra avy which-key helm-xref))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -175,19 +184,20 @@ version-control t)
   :config
   (global-git-gutter-mode 't))
 
-(use-package smartparens
-  :config
-  (add-hook 'prog-mode-hook 'smartparens-mode))
+;; This kinda sucks
+;; (use-package smartparens
+;;   :config
+;;   (add-hook 'prog-mode-hook 'smartparens-mode))
 
 ;; Alternatively:
-;; (electric-pair-mode 1)
-;; ;; make electric-pair-mode work on more brackets
-;; (setq electric-pair-pairs '(
-;;                             (?\" . ?\")
-;; 			    (?\' . ?\')
-;; 			    (?\( . ?\))
-;;                             (?\{ . ?\})
-;; 			    (?\[ . ?\])))
+(electric-pair-mode 1)
+;; make electric-pair-mode work on more brackets
+(setq electric-pair-pairs '(
+                            (?\" . ?\")
+			    (?\' . ?\')
+			    (?\( . ?\))
+                            (?\{ . ?\})
+			    (?\[ . ?\])))
 
 (use-package yasnippet
   :ensure
@@ -212,14 +222,17 @@ version-control t)
 (setq lsp-enable-snippet t)
 
 ; For tramp
+(require 'tramp)
 (setq lsp-clients-clangd-executable "/usr/bin/clangd")  ;; Adjust if clangd is in a different location
 (setq tramp-verbose 0)
 ; (setq tramp-methods nil)
 (setq tramp-default-method "ssh")
-(setq tramp-completion-reread-directory-timeout nil)
-(setq remote-file-name-inhibit-cache nil)
+(setq tramp-login-shell "bash")
+(setq tramp-remote-shell "/bin/bash")
 (setq tramp-terminal-type "vt100")
-(require 'tramp)
+
+
+
 
 (use-package lsp-mode
   :init
@@ -346,9 +359,33 @@ version-control t)
 
 ;; --------------------------------------- PYTHON SETUP ------------------------------
 
+(use-package conda)
+
+(conda-env-initialize-interactive-shells)
+(conda-env-initialize-eshell)
+
+(custom-set-variables
+ '(conda-anaconda-home "~/miniconda3"))
+
+(setq conda-anaconda-home "/home/yelnat/miniconda3")
+;; Set default environment
+(setq conda-env-home-directory (expand-file-name "~/miniconda3/envs"))
+
+
+(defun my/set-pyright-env ()
+  "Set pyright settings based on current conda environment"
+  (when (getenv "CONDA_DEFAULT_ENV")
+    (let ((env-name (getenv "CONDA_DEFAULT_ENV")))
+      (setq-local lsp-pyright-venv-path "/home/yelnat/miniconda3/envs")
+      (setq-local lsp-pyright-venv-directory env-name)
+      (setq-local lsp-pyright-python-executable-cmd 
+                  (concat "/home/yelnat/miniconda3/envs/" env-name "/bin/python")))))
+
+(add-hook 'python-mode-hook #'my/set-pyright-env)
+
 
 (use-package lsp-pyright
-  :hook (python-mode . (lambda () (require 'lsp-pyright)))
+  :hook (python-mode . (lambda () (require 'lsp-pyright) (require 'conda)))
   :init (when (executable-find "python")
           (setq lsp-pyright-python-executable-cmd "python")
 	  (setq lsp-pyright-multi-root nil)
@@ -360,9 +397,6 @@ version-control t)
 ;; https://github.com/emacs-lsp/dap-mode/issues/306
 ;; Gotta run pip install debugpy and maybe pip install pip install "python-lsp-server[all]"
 
-(setq python-shell-interpreter "/usr/local/bin/python")
-(setq python-shell-exec-path "/usr/local/bin/python")
-
 (dap-register-debug-template "Python template"
   (list :type "python"
         :args ""
@@ -371,6 +405,8 @@ version-control t)
        ; :target-module (expand-file-name "~/Documents/programmin/python-test/test.py")
         :request "launch"
         :name "My App"))
+
+
 
 ;; ;; --------------------------------------- DOCKER SETUP ------------------------------
 
@@ -449,3 +485,65 @@ version-control t)
 (which-key-mode) ; auto complete some keybinds
 (add-hook 'c-mode-hook 'lsp)
 (add-hook 'c++-mode-hook 'lsp)
+
+
+
+; --------------------------------- STUFF TO PUT IN FILES IN PLACES! ------------------------------------------------
+
+
+
+;; pyrightconfig.json: 
+;; {
+;;   "venv": "gentenv",
+;;   "venvPath": "/home/yelnat/miniconda3/envs",
+;;   "pythonVersion": "3.10",
+;;   "pythonPath": "/home/yelnat/miniconda3/envs/gentenv/bin/python",
+;;   "typeCheckingMode": "basic"
+;; }
+
+
+;; Launch.json for python files
+;; {
+;;     "version": "0.2.0",
+;;     "configurations": [
+;;         {
+;;             "name": "Python: Current File",
+;;             "type": "python",
+;;             "request": "launch",
+;;             "program": "${file}",
+;;             "console": "integratedTerminal",
+;;             "justMyCode": true,
+;;             "env": {
+;;                 "PYTHONPATH": "${workspaceFolder}"
+;;             }
+;;         },
+;;         {
+;;             "name": "Python: Specific File",
+;;             "type": "python",
+;;             "request": "launch",
+;;             "program": "${workspaceFolder}/path/to/your/file.py",
+;;             "console": "integratedTerminal",
+;;             "justMyCode": true,
+;;             "env": {
+;;                 "PYTHONPATH": "${workspaceFolder}"
+;;             }
+;;         },
+;;         {
+;;             "name": "Python: Remote Attach",
+;;             "type": "python",
+;;             "request": "attach",
+;;             "connect": {
+;;                 "host": "localhost",
+;;                 "port": 5678
+;;             },
+;;             "pathMappings": [
+;;                 {
+;;                     "localRoot": "${workspaceFolder}",
+;;                     "remoteRoot": "."
+;;                 }
+;;             ],
+;;             "justMyCode": true
+;;         }
+;;     ]
+;; }
+
