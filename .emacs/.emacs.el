@@ -53,12 +53,12 @@ version-control t)
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(conda-anaconda-home "~/miniconda3")
  '(custom-enabled-themes '(deeper-blue))
  '(custom-safe-themes
    '("e6fb17048752ae4f07e8a689f59fb909a7e3008c5db75af3d870b701ce6506ef" "b9628f9ad175d774bfc02f140e7aa058fc0a2f3aa10134125d643eae88b3f36c" "4c877a679cb7c0c17de7267c6440f60403b104a02659634656e9c2722a405f6a" "7f2c832000d6f007e8dc49bd30b5fbb7a4cf2e44b35ce8f6f65be57c59628421" "6e13ff2c27cf87f095db987bf30beca8697814b90cd837ef4edca18bdd381901" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
  '(inhibit-startup-screen t)
- '(package-selected-packages
-   '(majapahit-themes blackboard-theme lsp-treemacs helm-lsp hydra avy which-key helm-xref))
+ '(package-selected-packages '(lsp-treemacs helm-lsp hydra avy which-key helm-xref))
  '(warning-suppress-log-types '((comp))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -80,14 +80,6 @@ version-control t)
 (eval-and-compile
   (setq use-package-always-ensure t
         use-package-expand-minimally t))
-
-; Let GC use 200MB
-(setq gc-cons-threshold 200000000
-      read-process-output-max 10000000 ; Read 10mb from the process
-      treemacs-space-between-root-nodes nil ; Don't put spaces in the f8 menu (I think)
-      company-idle-delay 0.2
-      company-minimum-prefix-length 1
-      lsp-idle-delay 0.5)  ;; let lsp sit idle for half a second
 
 (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t))
 (add-to-list 'default-frame-alist '(ns-appearance . dark))
@@ -213,26 +205,26 @@ version-control t)
 
 ;--------------------------------- LANGUAGE SERVERS ----------------------------------
 
+; Let GC use 200MB
+(setq gc-cons-threshold 200000000
+      read-process-output-max 20000000 ; Read 20mb from the process
+      treemacs-space-between-root-nodes nil ; Don't put spaces in the f8 menu (I think)
+      company-idle-delay 0.2
+      company-minimum-prefix-length 1
+      lsp-idle-delay 0.5)  ;; let lsp sit idle for half a second
+
 ; Allegedly this is faster than using hash tables
 (setenv "LSP_USE_PLISTS" "true")
 
-; Make sure we ain't logging SHIT
- (setq lsp-log-io nil) ; if set to true can cause a performance hit
-;(setq lsp-log-io t)
 (setq lsp-enable-snippet t)
 
 ; For tramp
 (require 'tramp)
-(setq lsp-clients-clangd-executable "/usr/bin/clangd")  ;; Adjust if clangd is in a different location
+(setq lsp-clients-clangd-executable "/bin/clangd")  ;; Adjust if clangd is in a different location
 (setq tramp-verbose 0)
-; (setq tramp-methods nil)
 (setq tramp-default-method "ssh")
 (setq tramp-login-shell "bash")
 (setq tramp-remote-shell "/bin/bash")
-(setq tramp-terminal-type "vt100")
-
-
-
 
 (use-package lsp-mode
   :init
@@ -254,15 +246,25 @@ version-control t)
   (lsp-rust-analyzer-display-parameter-hints t) ; This can get messy sometims
   (lsp-rust-analyzer-display-reborrow-hints t)
   :config
-  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
   (lsp-register-client
-(make-lsp-client :new-connection (lsp-tramp-connection "/usr/local/bin/clangd")
-:major-modes '(c-mode)
-:remote? t
+   (make-lsp-client
+    :new-connection (lsp-tramp-connection 
+                    (lambda ()
+                      (let ((home (getenv "HOME")))
+                        (cond
+                         ;; Try local installation first
+                         ((file-exists-p (expand-file-name "~/local/bin/clangd"))
+                          (expand-file-name "~/local/bin/clangd"))
+                         ((file-exists-p "/usr/bin/clangd") "/usr/bin/clangd")
+                         ((file-exists-p "/usr/local/bin/clangd") "/usr/local/bin/clangd")
+                         (t "clangd")))))
+    :major-modes '(c-mode c++-mode)
+    :remote? t
+    :priority -1
 :server-id 'clangd-remote)))
 
 (with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration)
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode #'lsp-enable-which-key-integration)
   (require 'dap-cpptools)
   (yas-global-mode))
 
@@ -288,20 +290,12 @@ version-control t)
   :ensure
   :custom
   ;; (company-begin-commands nil) ;; uncomment to disable popup
-  ;; I like defaults, M-n, M-p :>
-  ;; :bind
-  ;; (:map company-active-map
-  ;;          ("C-n". company-select-next)
-  ;;	      ("C-p". company-select-previous)
-  ;;	      ("M-<". company-select-first)
-;;	      ("M->". company-select-last)))
   (:map company-mode-map
 	("<tab>". tab-indent-or-complete) ; Hit tab to autocomplete, escape to cancel
 	("TAB". tab-indent-or-complete)))
 
 ;; Tell lsp to stay out of company mode
 (setq lsp-completion-provider :none)
-
 (use-package yasnippet-snippets :ensure)
 
 ;; Add yasnippet support for all company backends
@@ -364,8 +358,7 @@ version-control t)
 (conda-env-initialize-interactive-shells)
 (conda-env-initialize-eshell)
 
-(custom-set-variables
- '(conda-anaconda-home "~/miniconda3"))
+
 
 (setq conda-anaconda-home "/home/yelnat/miniconda3")
 ;; Set default environment
@@ -546,4 +539,3 @@ version-control t)
 ;;         }
 ;;     ]
 ;; }
-
