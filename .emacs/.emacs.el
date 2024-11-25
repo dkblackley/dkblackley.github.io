@@ -340,8 +340,23 @@ version-control t)
 
 ;------------------------------------- DEBUGGERS -------------------------------
 
+;; Disable TRAMP temporarily if it's causing interference
+(setq tramp-mode nil)
+
+;; Enable DAP and set local environment settings
+(setq dap-auto-configure-mode t)
+(setq dap-auto-configure-features '(sessions locals breakpoints expressions controls tooltip))
+(setq dap-python-executable (executable-find "python"))
+
+;; Enable logging for debugging
+(setq dap-print-io t)
+(setq dap-log-protocol-enable t)
+(setq dap-debug-buffer-mode t)
+
+;; DAP Mode Configuration
 (use-package dap-mode
-  :ensure
+  :ensure t
+  :after lsp-mode
   :config
   (dap-ui-mode)
   (dap-ui-controls-mode 1)
@@ -349,7 +364,8 @@ version-control t)
   (setq dap-python-debugger 'debugpy)
   :bind
   (:map global-map
-	("C-c d" . dap-debug)))
+        ("C-c d" . dap-debug)))
+
 
 ;; --------------------------------------- PYTHON SETUP ------------------------------
 
@@ -400,6 +416,22 @@ version-control t)
         :name "My App"))
 
 
+;; Broken on debian stable
+;; (use-package py-autopep8
+;;   :ensure t  ;; This tells use-package to install if not present
+;;   :hook (python-mode . py-autopep8-mode))
+
+
+(defun autopep8-buffer ()
+  "Automatically formats Python code to conform to the PEP 8 style guide."
+  (interactive)
+  (when (eq major-mode 'python-mode)
+    (shell-command-to-string 
+     (format "autopep8 --in-place --aggressive --aggressive %s" 
+             (shell-quote-argument (buffer-file-name))))
+    (revert-buffer t t t)))
+
+(add-hook 'after-save-hook #'autopep8-buffer)
 
 ;; ;; --------------------------------------- DOCKER SETUP ------------------------------
 
