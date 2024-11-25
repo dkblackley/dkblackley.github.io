@@ -374,8 +374,6 @@ version-control t)
 (conda-env-initialize-interactive-shells)
 (conda-env-initialize-eshell)
 
-
-
 (setq conda-anaconda-home "/home/yelnat/miniconda3")
 ;; Set default environment
 (setq conda-env-home-directory (expand-file-name "~/miniconda3/envs"))
@@ -391,7 +389,6 @@ version-control t)
                   (concat "/home/yelnat/miniconda3/envs/" env-name "/bin/python")))))
 
 (add-hook 'python-mode-hook #'my/set-pyright-env)
-
 
 (use-package lsp-pyright
   :hook (python-mode . (lambda () (require 'lsp-pyright) (require 'conda)))
@@ -421,17 +418,23 @@ version-control t)
 ;;   :ensure t  ;; This tells use-package to install if not present
 ;;   :hook (python-mode . py-autopep8-mode))
 
-
 (defun autopep8-buffer ()
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
   (when (eq major-mode 'python-mode)
     (shell-command-to-string 
-     (format "autopep8 --in-place --aggressive --aggressive %s" 
+     (format "autopep8 --in-place --aggressive --aggressive --max-line-length=79 %s" 
              (shell-quote-argument (buffer-file-name))))
     (revert-buffer t t t)))
 
 (add-hook 'after-save-hook #'autopep8-buffer)
+
+;; Enable black
+;; (setq lsp-pyls-plugins-black-enabled t)
+;; (setq lsp-pylsp-plugins-yapf-enabled nil) ;; Disable other formatters
+;; (setq lsp-pylsp-plugins-autopep8-enabled nil) ;; Disable autopep8 if necessary
+;; (setq lsp-pylsp-plugins-black-path "/home/yelnat/miniconda3/bin/black")  ;; Ensure this is set to the correct `black` path
+
 
 ;; ;; --------------------------------------- DOCKER SETUP ------------------------------
 
