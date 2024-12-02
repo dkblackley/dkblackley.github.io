@@ -8,7 +8,7 @@
 ;; pip install pyright
 ;; pip install debugpy
 ;; pip install "python-lsp-server[all]"
-;; 
+;;
 
 
 
@@ -192,10 +192,10 @@ version-control t)
 ;; make electric-pair-mode work on more brackets
 (setq electric-pair-pairs '(
                             (?\" . ?\")
-			    (?\' . ?\')
-			    (?\( . ?\))
+                            (?\' . ?\')
+                            (?\( . ?\))
                             (?\{ . ?\})
-			    (?\[ . ?\])))
+                            (?\[ . ?\])))
 
 (use-package yasnippet
   :ensure
@@ -211,6 +211,11 @@ version-control t)
 
 ;--------------------------------- LANGUAGE SERVERS ----------------------------------
 
+;; Add before your LSP configuration
+(setq lsp-keep-workspace-alive nil)
+(setq lsp-enable-file-watchers nil)
+(setq lsp-file-watch-threshold nil)
+
 ; Let GC use 200MB
 (setq gc-cons-threshold 200000000
       read-process-output-max 20000000 ; Read 20mb from the process
@@ -224,13 +229,13 @@ version-control t)
 
 (setq lsp-enable-snippet t)
 
-; For 
-(require ')
-(setq lsp-clients-clangd-executable "/bin/clangd")  ;; Adjust if clangd is in a different location
-(setq -verbose 0)
-(setq -default-method "ssh")
-(setq -login-shell "bash")
-(setq -remote-shell "/bin/bash")
+; For TRAMP
+(require 'tramp)
+(setq lsp-clients-clangd-executable "/bin/clangd")
+(setq tramp-verbose 0)
+(setq tramp-default-method "ssh")
+(setq tramp-login-shell "bash")
+(setq tramp-remote-shell "/bin/bash")
 
 (use-package lsp-mode
   :init
@@ -254,20 +259,12 @@ version-control t)
   :config
   (lsp-register-client
    (make-lsp-client
-    :new-connection (lsp--connection 
-                    (lambda ()
-                      (let ((home (getenv "HOME")))
-                        (cond
-                         ;; Try local installation first
-                         ((file-exists-p (expand-file-name "~/local/bin/clangd"))
-                          (expand-file-name "~/local/bin/clangd"))
-                         ((file-exists-p "/usr/bin/clangd") "/usr/bin/clangd")
-                         ((file-exists-p "/usr/local/bin/clangd") "/usr/local/bin/clangd")
-                         (t "clangd")))))
+    :new-connection (lsp-tramp-connection "clangd")
     :major-modes '(c-mode c++-mode)
     :remote? t
+    :server-id 'clangd-remote
     :priority -1
-:server-id 'clangd-remote)))
+    :activation-fn (lsp-activate-on 'c-mode 'c++-mode))))
 
 (with-eval-after-load 'lsp-mode
   (add-hook 'lsp-mode-hook 'lsp-ui-mode #'lsp-enable-which-key-integration)
@@ -297,8 +294,8 @@ version-control t)
   :custom
   ;; (company-begin-commands nil) ;; uncomment to disable popup
   (:map company-mode-map
-	("<tab>". tab-indent-or-complete) ; Hit tab to autocomplete, escape to cancel
-	("TAB". tab-indent-or-complete)))
+        ("<tab>". tab-indent-or-complete) ; Hit tab to autocomplete, escape to cancel
+        ("TAB". tab-indent-or-complete)))
 
 ;; Tell lsp to stay out of company mode
 (setq lsp-completion-provider :none)
@@ -391,7 +388,7 @@ version-control t)
     (let ((env-name (getenv "CONDA_DEFAULT_ENV")))
       (setq-local lsp-pyright-venv-path "/home/yelnat/miniconda3/envs")
       (setq-local lsp-pyright-venv-directory env-name)
-      (setq-local lsp-pyright-python-executable-cmd 
+      (setq-local lsp-pyright-python-executable-cmd
                   (concat "/home/yelnat/miniconda3/envs/" env-name "/bin/python")))))
 
 (add-hook 'python-mode-hook #'my/set-pyright-env)
@@ -400,8 +397,8 @@ version-control t)
   :hook (python-mode . (lambda () (require 'lsp-pyright) (require 'conda)))
   :init (when (executable-find "python")
           (setq lsp-pyright-python-executable-cmd "python")
-	  (setq lsp-pyright-multi-root nil)
-	  (setq lsp-pyright-auto-search-paths nil)))
+          (setq lsp-pyright-multi-root nil)
+          (setq lsp-pyright-auto-search-paths nil)))
 
 
 
@@ -413,7 +410,7 @@ version-control t)
   (list :type "python"
         :args ""
         :cwd "/home/yelnat/Documents/programmin/python-test/"
-	:program "~/Documents/programmin/python-test/test.py"
+        :program "~/Documents/programmin/python-test/test.py"
        ; :target-module (expand-file-name "~/Documents/programmin/python-test/test.py")
         :request "launch"
         :name "My App"))
@@ -428,8 +425,8 @@ version-control t)
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
   (when (eq major-mode 'python-mode)
-    (shell-command-to-string 
-     (format "autopep8 --in-place --aggressive --aggressive --max-line-length=79 %s" 
+    (shell-command-to-string
+     (format "autopep8 --in-place --aggressive --aggressive --max-line-length=79 %s"
              (shell-quote-argument (buffer-file-name))))
     (revert-buffer t t t)))
 
@@ -458,7 +455,7 @@ version-control t)
                              (list :type "gdb"
                                    :request "launch"
                                    :name "GDB::Run"
-				   :gdbpath "~/.cargo/bin/rust-gdb"
+                                   :gdbpath "~/.cargo/bin/rust-gdb"
                                    :target nil
                                    :program "${workspaceFolder}/target/debug/hello / replace with binary"
                                    :cwd "${workspaceFolder}"))
@@ -526,7 +523,7 @@ version-control t)
 
 
 
-;; pyrightconfig.json: 
+;; pyrightconfig.json:
 ;; {
 ;;   "venv": "gentenv",
 ;;   "venvPath": "/home/yelnat/miniconda3/envs",
