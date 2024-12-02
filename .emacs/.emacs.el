@@ -224,13 +224,13 @@ version-control t)
 
 (setq lsp-enable-snippet t)
 
-; For tramp
-(require 'tramp)
+; For 
+(require ')
 (setq lsp-clients-clangd-executable "/bin/clangd")  ;; Adjust if clangd is in a different location
-(setq tramp-verbose 0)
-(setq tramp-default-method "ssh")
-(setq tramp-login-shell "bash")
-(setq tramp-remote-shell "/bin/bash")
+(setq -verbose 0)
+(setq -default-method "ssh")
+(setq -login-shell "bash")
+(setq -remote-shell "/bin/bash")
 
 (use-package lsp-mode
   :init
@@ -254,7 +254,7 @@ version-control t)
   :config
   (lsp-register-client
    (make-lsp-client
-    :new-connection (lsp-tramp-connection 
+    :new-connection (lsp--connection 
                     (lambda ()
                       (let ((home (getenv "HOME")))
                         (cond
@@ -347,7 +347,7 @@ version-control t)
 ;------------------------------------- DEBUGGERS -------------------------------
 
 ;; Disable TRAMP temporarily if it's causing interference
-(setq tramp-mode nil)
+;; (setq tramp-mode nil)
 
 ;; Enable DAP and set local environment settings
 (setq dap-auto-configure-mode t)
