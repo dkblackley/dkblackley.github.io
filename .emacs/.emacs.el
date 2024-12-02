@@ -211,11 +211,6 @@ version-control t)
 
 ;--------------------------------- LANGUAGE SERVERS ----------------------------------
 
-;; Add before your LSP configuration
-(setq lsp-keep-workspace-alive nil)
-(setq lsp-enable-file-watchers nil)
-(setq lsp-file-watch-threshold nil)
-
 ; Let GC use 200MB
 (setq gc-cons-threshold 200000000
       read-process-output-max 20000000 ; Read 20mb from the process
@@ -229,13 +224,16 @@ version-control t)
 
 (setq lsp-enable-snippet t)
 
-; For TRAMP
+; For tramp
 (require 'tramp)
-(setq lsp-clients-clangd-executable "/bin/clangd")
+(setq lsp-clients-clangd-executable "/bin/clangd")  ;; Adjust if clangd is in a different location
 (setq tramp-verbose 0)
 (setq tramp-default-method "ssh")
 (setq tramp-login-shell "bash")
 (setq tramp-remote-shell "/bin/bash")
+
+(setq lsp-inline-completion-enable nil)
+
 
 (use-package lsp-mode
   :init
@@ -248,7 +246,7 @@ version-control t)
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-eldoc-render-all t)
   ;; enable / disable the hints as you prefer:
-  (lsp-inlay-hint-enable t)
+;;  (lsp-inlay-hint-enable t)
   ;; These are optional configurations. See https://emacs-lsp.github.io/lsp-mode/page/lsp-rust-analyzer/#lsp-rust-analyzer-display-chaining-hints for a full list
   (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
   (lsp-rust-analyzer-display-chaining-hints t)
@@ -259,12 +257,20 @@ version-control t)
   :config
   (lsp-register-client
    (make-lsp-client
-    :new-connection (lsp-tramp-connection "clangd")
+    :new-connection (lsp-tramp-connection
+                    (lambda ()
+                      (let ((home (getenv "HOME")))
+                        (cond
+                         ;; Try local installation first
+                         ((file-exists-p (expand-file-name "~/local/bin/clangd"))
+                          (expand-file-name "~/local/bin/clangd"))
+                         ((file-exists-p "/usr/bin/clangd") "/usr/bin/clangd")
+                         ((file-exists-p "/usr/local/bin/clangd") "/usr/local/bin/clangd")
+                         (t "clangd")))))
     :major-modes '(c-mode c++-mode)
     :remote? t
-    :server-id 'clangd-remote
     :priority -1
-    :activation-fn (lsp-activate-on 'c-mode 'c++-mode))))
+:server-id 'clangd-remote)))
 
 (with-eval-after-load 'lsp-mode
   (add-hook 'lsp-mode-hook 'lsp-ui-mode #'lsp-enable-which-key-integration)
