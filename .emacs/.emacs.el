@@ -102,6 +102,12 @@ version-control t)
 (use-package auctex
   :ensure)
 
+(use-package highlight-indent-guides
+  :ensure t
+  :hook (prog-mode . highlight-indent-guides-mode)
+  :custom
+  (highlight-indent-guides-method 'character))
+
 (use-package goto-last-change
   :bind (("C-;" . goto-last-change)))
 
