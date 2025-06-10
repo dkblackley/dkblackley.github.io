@@ -8,17 +8,18 @@
 ;; pip install pyright
 ;; pip install debugpy
 ;; pip install "python-lsp-server[all]"
-;;
-
+;; 
 
 
 ; ------------------------------------- EMACS STUFF ---------------------------------------------
+
+
+
 
 ; Tramp speedup?
 (setq tramp-completion-reread-directory-timeout t)
 
 (setq remote-file-name-inhibit-cache nil)
-(setq tramp-verbose 1)
 
 
 ; Assume bash cause I use zsh
@@ -53,13 +54,23 @@ version-control t)
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(conda-anaconda-home "~/miniconda3")
+ '(conda-anaconda-home "~/miniconda3" t)
  '(custom-enabled-themes '(deeper-blue))
  '(custom-safe-themes
-   '("e6fb17048752ae4f07e8a689f59fb909a7e3008c5db75af3d870b701ce6506ef" "b9628f9ad175d774bfc02f140e7aa058fc0a2f3aa10134125d643eae88b3f36c" "4c877a679cb7c0c17de7267c6440f60403b104a02659634656e9c2722a405f6a" "7f2c832000d6f007e8dc49bd30b5fbb7a4cf2e44b35ce8f6f65be57c59628421" "6e13ff2c27cf87f095db987bf30beca8697814b90cd837ef4edca18bdd381901" "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9" "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4" "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606" "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5" default))
+   '("e6fb17048752ae4f07e8a689f59fb909a7e3008c5db75af3d870b701ce6506ef"
+     "b9628f9ad175d774bfc02f140e7aa058fc0a2f3aa10134125d643eae88b3f36c"
+     "4c877a679cb7c0c17de7267c6440f60403b104a02659634656e9c2722a405f6a"
+     "7f2c832000d6f007e8dc49bd30b5fbb7a4cf2e44b35ce8f6f65be57c59628421"
+     "6e13ff2c27cf87f095db987bf30beca8697814b90cd837ef4edca18bdd381901"
+     "dccf4a8f1aaf5f24d2ab63af1aa75fd9d535c83377f8e26380162e888be0c6a9"
+     "2902694c7ef5d2a757146f0a7ce67976c8d896ea0a61bd21d3259378add434c4"
+     "039112154ee5166278a7b65790c665fe17fd21c84356b7ad4b90c29ffe0ad606"
+     "7f1d414afda803f3244c6fb4c2c64bea44dac040ed3731ec9d75275b9e831fe5"
+     default))
  '(inhibit-startup-screen t)
- '(package-selected-packages '(lsp-treemacs helm-lsp hydra avy which-key helm-xref))
- '(warning-suppress-log-types '((comp))))
+ '(package-selected-packages nil)
+ '(warning-suppress-log-types '(((unlock-file)) ((unlock-file)) ((unlock-file))))
+ '(warning-suppress-types '(((unlock-file)) ((unlock-file)))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -67,11 +78,23 @@ version-control t)
  ;; If there is more than one, they won't work right.
  )
 
-;; Add MELPA archive to packages
+
+;; ------------- Package archives ---------------------------------
 (require 'package)
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("gnu"   . "https://elpa.gnu.org/packages/"))
+
+(setq package-archives
+      '(("gnu"    . "https://elpa.gnu.org/packages/")
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa"  . "https://melpa.org/packages/")))
+
+;; Prefer GNU > Non-GNU > MELPA when the same package exists in several places
+(setq package-archive-priorities
+      '(("gnu" . 3) ("nongnu" . 2) ("melpa" . 1)))
+
 (package-initialize)
+
+(unless package-archive-contents
+  (package-refresh-contents))   ;; first run only
 
 ; Use-package for easy package management
 (unless (package-installed-p 'use-package)
@@ -88,7 +111,9 @@ version-control t)
 (global-set-key (kbd "C-M-<tab>") 'indent-region)
 (global-set-key (kbd "C-z") 'undo)
 
-;--------------------------------- Random packages ----------------------------------
+					;--------------------------------- Random packages ----------------------------------
+
+
 
 (use-package benchmark-init
     :ensure
@@ -102,11 +127,11 @@ version-control t)
 (use-package auctex
   :ensure)
 
-(use-package highlight-indent-guides
-  :ensure t
-  :hook (prog-mode . highlight-indent-guides-mode)
-  :custom
-  (highlight-indent-guides-method 'character))
+(setq TeX-auto-save t)
+
+(use-package math-preview
+  :custom (math-preview-command "/usr/local/lib/node_modules/math-preview/math-preview.js"))
+
 
 (use-package goto-last-change
   :bind (("C-;" . goto-last-change)))
@@ -192,10 +217,10 @@ version-control t)
 ;; make electric-pair-mode work on more brackets
 (setq electric-pair-pairs '(
                             (?\" . ?\")
-                            (?\' . ?\')
-                            (?\( . ?\))
+			    (?\' . ?\')
+			    (?\( . ?\))
                             (?\{ . ?\})
-                            (?\[ . ?\])))
+			    (?\[ . ?\])))
 
 (use-package yasnippet
   :ensure
@@ -210,6 +235,19 @@ version-control t)
   :ensure t)
 
 ;--------------------------------- LANGUAGE SERVERS ----------------------------------
+
+;; DAP Mode Configuration
+(use-package dap-mode
+  :ensure t
+  :after lsp-mode
+  :config
+  (dap-ui-mode)
+  (dap-ui-controls-mode 1)
+  (require 'dap-python)
+  (setq dap-python-debugger 'debugpy)
+  :bind
+  (:map global-map
+        ("C-c d" . dap-debug)))
 
 ; Let GC use 200MB
 (setq gc-cons-threshold 200000000
@@ -227,13 +265,10 @@ version-control t)
 ; For tramp
 (require 'tramp)
 (setq lsp-clients-clangd-executable "/bin/clangd")  ;; Adjust if clangd is in a different location
-(setq tramp-verbose 0)
+(setq tramp-verbose 10)
 (setq tramp-default-method "ssh")
 (setq tramp-login-shell "bash")
 (setq tramp-remote-shell "/bin/bash")
-
-(setq lsp-inline-completion-enable nil)
-
 
 (use-package lsp-mode
   :init
@@ -246,7 +281,7 @@ version-control t)
   (lsp-rust-analyzer-cargo-watch-command "clippy")
   (lsp-eldoc-render-all t)
   ;; enable / disable the hints as you prefer:
-;;  (lsp-inlay-hint-enable t)
+  (lsp-inlay-hint-enable t)
   ;; These are optional configurations. See https://emacs-lsp.github.io/lsp-mode/page/lsp-rust-analyzer/#lsp-rust-analyzer-display-chaining-hints for a full list
   (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
   (lsp-rust-analyzer-display-chaining-hints t)
@@ -257,7 +292,7 @@ version-control t)
   :config
   (lsp-register-client
    (make-lsp-client
-    :new-connection (lsp-tramp-connection
+    :new-connection (lsp-tramp-connection 
                     (lambda ()
                       (let ((home (getenv "HOME")))
                         (cond
@@ -300,8 +335,8 @@ version-control t)
   :custom
   ;; (company-begin-commands nil) ;; uncomment to disable popup
   (:map company-mode-map
-        ("<tab>". tab-indent-or-complete) ; Hit tab to autocomplete, escape to cancel
-        ("TAB". tab-indent-or-complete)))
+	("<tab>". tab-indent-or-complete) ; Hit tab to autocomplete, escape to cancel
+	("TAB". tab-indent-or-complete)))
 
 ;; Tell lsp to stay out of company mode
 (setq lsp-completion-provider :none)
@@ -362,30 +397,16 @@ version-control t)
 (setq dap-log-protocol-enable t)
 (setq dap-debug-buffer-mode t)
 
-;; DAP Mode Configuration
-(use-package dap-mode
-  :ensure t
-  :after lsp-mode
-  :config
-  (dap-ui-mode)
-  (dap-ui-controls-mode 1)
-  (require 'dap-python)
-  (setq dap-python-debugger 'debugpy)
-  :bind
-  (:map global-map
-        ("C-c d" . dap-debug)))
+
 
 
 ;; --------------------------------------- PYTHON SETUP ------------------------------
 
-(use-package conda)
 
-(conda-env-initialize-interactive-shells)
-(conda-env-initialize-eshell)
+
 
 (setq conda-anaconda-home "/home/yelnat/miniconda3")
-;; Set default environment
-(setq conda-env-home-directory (expand-file-name "~/miniconda3/envs"))
+
 
 
 (defun my/set-pyright-env ()
@@ -394,7 +415,7 @@ version-control t)
     (let ((env-name (getenv "CONDA_DEFAULT_ENV")))
       (setq-local lsp-pyright-venv-path "/home/yelnat/miniconda3/envs")
       (setq-local lsp-pyright-venv-directory env-name)
-      (setq-local lsp-pyright-python-executable-cmd
+      (setq-local lsp-pyright-python-executable-cmd 
                   (concat "/home/yelnat/miniconda3/envs/" env-name "/bin/python")))))
 
 (add-hook 'python-mode-hook #'my/set-pyright-env)
@@ -403,8 +424,8 @@ version-control t)
   :hook (python-mode . (lambda () (require 'lsp-pyright) (require 'conda)))
   :init (when (executable-find "python")
           (setq lsp-pyright-python-executable-cmd "python")
-          (setq lsp-pyright-multi-root nil)
-          (setq lsp-pyright-auto-search-paths nil)))
+	  (setq lsp-pyright-multi-root nil)
+	  (setq lsp-pyright-auto-search-paths nil)))
 
 
 
@@ -416,7 +437,7 @@ version-control t)
   (list :type "python"
         :args ""
         :cwd "/home/yelnat/Documents/programmin/python-test/"
-        :program "~/Documents/programmin/python-test/test.py"
+	:program "~/Documents/programmin/python-test/test.py"
        ; :target-module (expand-file-name "~/Documents/programmin/python-test/test.py")
         :request "launch"
         :name "My App"))
@@ -431,8 +452,8 @@ version-control t)
   "Automatically formats Python code to conform to the PEP 8 style guide."
   (interactive)
   (when (eq major-mode 'python-mode)
-    (shell-command-to-string
-     (format "autopep8 --in-place --aggressive --aggressive --max-line-length=79 %s"
+    (shell-command-to-string 
+     (format "autopep8 --in-place --aggressive --aggressive --max-line-length=79 %s" 
              (shell-quote-argument (buffer-file-name))))
     (revert-buffer t t t)))
 
@@ -461,7 +482,7 @@ version-control t)
                              (list :type "gdb"
                                    :request "launch"
                                    :name "GDB::Run"
-                                   :gdbpath "~/.cargo/bin/rust-gdb"
+				   :gdbpath "~/.cargo/bin/rust-gdb"
                                    :target nil
                                    :program "${workspaceFolder}/target/debug/hello / replace with binary"
                                    :cwd "${workspaceFolder}"))
@@ -529,7 +550,7 @@ version-control t)
 
 
 
-;; pyrightconfig.json:
+;; pyrightconfig.json: 
 ;; {
 ;;   "venv": "gentenv",
 ;;   "venvPath": "/home/yelnat/miniconda3/envs",
