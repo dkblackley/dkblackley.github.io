@@ -8,7 +8,7 @@
 ;; pip install pyright
 ;; pip install debugpy
 ;; pip install "python-lsp-server[all]"
-;; 
+;; npm install -g git+https://gitlab.com/matsievskiysv/math-preview
 
 
 ; ------------------------------------- EMACS STUFF ---------------------------------------------
