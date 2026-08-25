@@ -72,11 +72,11 @@ ninja.data = [{
               handler: () => {
                 window.location.href = "/blog/";
               },
-            },{id: "post-how-to-write-an-understandable-paper",
+            },{id: "post-how-to-write-well",
         
-          title: "how to write an understandable paper.",
+          title: "How to write well.",
         
-        description: "some lessons i&#39;ve taken from my advisor on how to write in a way that is easy to understand.",
+        description: "Some lessons I&#39;ve taken from my advisor on how to write in a way that is easy to understand.",
         section: "Posts",
         handler: () => {
           
