@@ -1,109 +1,13 @@
 ---
 layout: post
-title: how to write an understandable paper.
+title: How to write well.
 date: 2026-08-24 22:07:00
-description: some lessons i've taken from my advisor on how to write in a way that is easy to understand.
+description: Some lessons I've taken from my advisor on how to write in a way that is easy to understand.
 tags: phd guide papers
 categories: guides
 ---
 
-I cannot write well. 
-This is an example post with some [plotly](https://plotly.com/javascript/) code.
+It is easy to write, I am doing it right now. It is not easy to *write well*. Unfortunately I do not write well, this post is to serve myself as much as it is to serve any passerby. During my time as a PhD student I have had to write many papers and the advice of my advisor often gets lost in a bundle of notes. For my own sake I have bundled them here. This is not a style guide or latex tips, for those I recommend [the stanford style guide for LaTeX](https://web.stanford.edu/class/ee364b/latex_templates/template_notes.pdf) which focusses on how to write math in LaTeX as well as many tips for writing well.
 
-````markdown
-```plotly
-{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "type": "scatter"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [16, 5, 11, 9],
-      "type": "scatter"
-    }
-  ]
-}
-```
-````
 
-Which generates:
 
-```plotly
-{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "type": "scatter"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [16, 5, 11, 9],
-      "type": "scatter"
-    }
-  ]
-}
-```
-
-Also another example chart.
-
-````markdown
-```plotly
-{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "mode": "markers"
-    },
-    {
-      "x": [2, 3, 4, 5],
-      "y": [16, 5, 11, 9],
-      "mode": "lines"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [12, 9, 15, 12],
-      "mode": "lines+markers"
-    }
-  ],
-  "layout": {
-    "title": {
-      "text": "Line and Scatter Plot"
-    }
-  }
-}
-```
-````
-
-This is how it looks like:
-
-```plotly
-{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "mode": "markers"
-    },
-    {
-      "x": [2, 3, 4, 5],
-      "y": [16, 5, 11, 9],
-      "mode": "lines"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [12, 9, 15, 12],
-      "mode": "lines+markers"
-    }
-  ],
-  "layout": {
-    "title": {
-      "text": "Line and Scatter Plot"
-    }
-  }
-}
-```
