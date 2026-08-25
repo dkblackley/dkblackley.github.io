@@ -2,14 +2,14 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: Blackley Blog # the website title (if blank, full name will be used instead)
+title: Website of Daniel Blackley # the website title (if blank, full name will be used instead)
 first_name: Daniel
 middle_name: K.
 last_name: Blackley
 contact_note: >
   Contact me at dblackle@gmu.edu
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  A blog about my Papers, Computer Theory, Security, Artificial Intelligence, and other musings.  
+  A website for my Papers or posts relating to: Computer Theory, Security, Artificial Intelligence, and other musings.  
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
