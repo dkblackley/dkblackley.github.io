@@ -1,14 +1,13 @@
 ---
 layout: post
-title: a post with plotly.js
-date: 2025-03-26 14:24:00
-description: this is what included plotly.js code could look like
-tags: formatting charts
-categories: sample-posts
-chart:
-  plotly: true
+title: how to write an understandable paper.
+date: 2026-08-24 22:07:00
+description: some lessons i've taken from my advisor on how to write in a way that is easy to understand.
+tags: phd guide papers
+categories: guides
 ---
 
+I cannot write well. 
 This is an example post with some [plotly](https://plotly.com/javascript/) code.
 
 ````markdown
