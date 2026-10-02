@@ -1,14 +1,8 @@
 github_users:
-  - torvalds
-  - alshedivat
+  - dkblackley
 
 repo_description_lines_max: 2
 
+# Repositories are only shown if listed here (e.g. - dkblackley/some-repo).
+# The "GitHub Repositories" section is hidden while this list is empty.
 github_repos:
-  - alshedivat/al-folio
-  - jekyll/jekyll
-  - twbs/bootstrap
-  - jquery/jquery
-  - FortAwesome/Font-Awesome
-  - mathjax/MathJax
-  - jpswalsh/academicons

@@ -1,4 +1,5 @@
 ---
+published: false # hidden until there is real content; delete this line to re-enable
 layout: book-shelf
 title: bookshelf
 permalink: /books/
