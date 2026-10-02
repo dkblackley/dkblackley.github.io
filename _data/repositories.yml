@@ -6,3 +6,6 @@ repo_description_lines_max: 2
 # Repositories are only shown if listed here (e.g. - dkblackley/some-repo).
 # The "GitHub Repositories" section is hidden while this list is empty.
 github_repos:
+  - dkblackley/bins-go
+  - dkblackley/frequency-analysis-limits
+  - alshedivat/al-folio
