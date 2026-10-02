@@ -72,18 +72,7 @@ ninja.data = [{
               handler: () => {
                 window.location.href = "/blog/";
               },
-            },{id: "post-how-to-write-well",
-        
-          title: "How to write well.",
-        
-        description: "Some lessons I&#39;ve taken from my advisor on how to write in a way that is easy to understand.",
-        section: "Posts",
-        handler: () => {
-          
-            window.location.href = "/blog/2026/how-to-write/";
-          
-        },
-      },{id: "books-the-godfather",
+            },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
           section: "Books",handler: () => {
